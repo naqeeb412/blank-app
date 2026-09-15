@@ -1,5 +1,19 @@
 import streamlit as st
 from datetime import datetime, date
+
+# ============================================================
+# NAQclinixAI
+# Intelligent Dentistry, Perfect Harmony
+# Version 1.3
+# ============================================================
+
+st.set_page_config(
+    page_title="NAQclinixAI",
+    page_icon="🦷",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
 # ============================================================
 # GOOGLE AUTHENTICATION
 # ============================================================
@@ -14,6 +28,15 @@ if not st.user.is_logged_in:
         st.login("google")
 
     st.stop()
+
+from database import (
+    initialize_database,
+    add_patient,
+    get_patients,
+    patient_exists,
+    add_visit,
+    get_patient_visits,
+)
 from database import (
     initialize_database,
     add_patient,
