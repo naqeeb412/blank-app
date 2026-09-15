@@ -1,6 +1,19 @@
 import streamlit as st
 from datetime import datetime, date
+# ============================================================
+# GOOGLE AUTHENTICATION
+# ============================================================
 
+if not st.user.is_logged_in:
+    st.title("🦷 NAQclinixAI")
+    st.subheader("Intelligent Dentistry, Perfect Harmony")
+
+    st.write("Please sign in to access your clinical dashboard.")
+
+    if st.button("🔐 Log in with Google", type="primary"):
+        st.login("google")
+
+    st.stop()
 from database import (
     initialize_database,
     add_patient,
