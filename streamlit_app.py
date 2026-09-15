@@ -25,9 +25,22 @@ if not st.user.is_logged_in:
     st.write("Please sign in to access your clinical dashboard.")
 
     if st.button("🔐 Log in with Google", type="primary"):
-        st.login("google")
+        st.login()
 
     st.stop()
+
+# ============================================================
+# DATABASE
+# ============================================================
+
+from database import (
+    initialize_database,
+    add_patient,
+    get_patients,
+    patient_exists,
+    add_visit,
+    get_patient_visits,
+)
 
 from database import (
     initialize_database,
