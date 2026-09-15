@@ -21,7 +21,6 @@ st.set_page_config(
 if not st.user.is_logged_in:
     st.title("🦷 NAQclinixAI")
     st.subheader("Intelligent Dentistry, Perfect Harmony")
-
     st.write("Please sign in to access your clinical dashboard.")
 
     if st.button("🔐 Log in with Google", type="primary"):
@@ -42,43 +41,14 @@ from database import (
     get_patient_visits,
 )
 
-from database import (
-    initialize_database,
-    add_patient,
-    get_patients,
-    patient_exists,
-    add_visit,
-    get_patient_visits,
-)
-from database import (
-    initialize_database,
-    add_patient,
-    get_patients,
-    patient_exists,
-    add_visit,
-    get_patient_visits,
-)
-
-# ============================================================
-# NAQclinixAI
-# Intelligent Dentistry, Perfect Harmony
-# Version 1.3
-# ============================================================
-
-st.set_page_config(
-    page_title="NAQclinixAI",
-    page_icon="🦷",
-    layout="wide",
-    initial_sidebar_state="expanded",
-)
-
-# Initialize database
 initialize_database()
 
 # ============================================================
 # SESSION STATE
 # ============================================================
 
+if "active_patient_id" not in st.session_state:
+    st.session_state.active_patient_id = None
 if "active_patient_id" not in st.session_state:
     st.session_state.active_patient_id = None
 
