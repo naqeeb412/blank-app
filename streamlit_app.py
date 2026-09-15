@@ -453,152 +453,296 @@ elif menu == "Patient":
 
                 visits = get_patient_visits(
                     active_id
-                )        """
-        1. Patient Registration
-        2. Clinical Patient Record
-        3. Clinical Visit
-        4. Facial & Smile Analysis
-        5. Clinical Diagnosis
-        6. Treatment Planning
-        7. Clinical Report
-        """
-    )
+                )
 
-    if st.session_state.active_patient_id:
+                if not visits:
+
+                    st.info(
+                        "No clinical visits recorded yet."
+                    )
+
+                else:
+
+                    for visit in visits:
+
+                        title = (
+                            str(visit["visit_date"])
+                            + " — "
+                            + str(visit["visit_type"])
+                        )
+
+                        with st.expander(title):
+
+                            st.write(
+                                "**Chief Complaint:**"
+                            )
+
+                            st.write(
+                                visit["chief_complaint"]
+                                or "—"
+                            )
+
+                            st.write(
+                                "**Clinical Findings:**"
+                            )
+
+                            st.write(
+                                visit["clinical_findings"]
+                                or "—"
+                            )
+
+                            st.write(
+                                "**Diagnosis:**"
+                            )
+
+                            st.write(
+                                visit["diagnosis"]
+                                or "—"
+                            )
+
+                            st.write(
+                                "**Treatment Plan:**"
+                            )
+
+                            st.write(
+                                visit["treatment_plan"]
+                                or "—"
+                            )
+
+                            st.write(
+                                "**Notes:**"
+                            )
+
+                            st.write(
+                                visit["notes"]
+                                or "—"
+                            )
+
+
+# ============================================================
+# FACIAL ANALYSIS
+# ============================================================
+
+elif menu == "Facial Analysis":
+
+    st.title("📐 Facial Analysis")
+
+    if not st.session_state.active_patient_id:
+
+        st.warning(
+            "Select an active patient first."
+        )
+
+    else:
 
         st.success(
-            f"Active patient: {st.session_state.active_patient_id}"
+            "Active Patient: "
+            + st.session_state.active_patient_id
+        )
+
+        st.subheader(
+            "Dentofacial Analysis Framework"
+        )
+
+        measurements = [
+            "Bizygomatic Width",
+            "Total Facial Height",
+            "Lower Facial Height",
+            "Facial Proportions",
+            "Facial Symmetry",
+            "Facial Harmony",
+        ]
+
+        for item in measurements:
+
+            st.checkbox(
+                item,
+                key="facial_" + item
+            )
+
+        st.info(
+            "AI landmark detection and quantitative facial analysis will be integrated in the next development stage."
         )
 
 
 # ============================================================
-# PATIENT
+# SMILE DESIGN
 # ============================================================
 
-elif menu == "Patient":
+elif menu == "Smile Design":
 
-    st.title("👤 Patient Management")
+    st.title("😁 AI Smile Design")
 
-    tab1, tab2, tab3 = st.tabs(
-        [
-            "New Patient",
-            "Patient Records",
-            "Clinical Record",
+    if not st.session_state.active_patient_id:
+
+        st.warning(
+            "Select an active patient first."
+        )
+
+    else:
+
+        st.success(
+            "Active Patient: "
+            + st.session_state.active_patient_id
+        )
+
+        options = [
+            "Digital Smile Design",
+            "Tooth Proportion Analysis",
+            "Smile Line",
+            "Gingival Display",
+            "Incisal Position",
+            "Dental Midline",
         ]
-    )
 
-    # ========================================================
-    # NEW PATIENT
-    # ========================================================
+        selected = st.multiselect(
+            "Select analysis components",
+            options
+        )
 
-    with tab1:
+        if selected:
 
-        st.subheader("Register New Patient")
-
-        col1, col2 = st.columns(2)
-
-        with col1:
-
-            patient_name = st.text_input(
-                "Patient Name"
+            st.success(
+                str(len(selected))
+                + " components selected."
             )
 
-            patient_id = st.text_input(
-                "Patient ID",
-                placeholder="Example: NAQ-0002"
-            )
 
-            patient_phone = st.text_input(
-                "Phone"
-            )
+# ============================================================
+# CLINICAL DIAGNOSIS
+# ============================================================
 
-        with col2:
+elif menu == "Clinical Diagnosis":
 
-            patient_age = st.number_input(
-                "Age",
-                min_value=0,
-                max_value=120,
-                value=25
-            )
+    st.title("🩺 Clinical Diagnosis")
 
-            patient_sex = st.selectbox(
-                "Sex",
-                [
-                    "Male",
-                    "Female",
-                    "Other",
-                ]
-            )
+    if not st.session_state.active_patient_id:
 
-        clinical_notes = st.text_area(
-            "Initial Clinical Notes"
+        st.warning(
+            "Select an active patient first."
+        )
+
+    else:
+
+        st.success(
+            "Active Patient: "
+            + st.session_state.active_patient_id
+        )
+
+        diagnosis_type = st.selectbox(
+            "Clinical Module",
+            [
+                "General Assessment",
+                "Aesthetic Dentistry",
+                "Orthodontics",
+                "Prosthodontics",
+                "Gingival Aesthetics",
+                "Endodontics",
+            ]
+        )
+
+        findings = st.text_area(
+            "Clinical Findings"
         )
 
         if st.button(
-            "Save Patient",
+            "Generate Assessment",
             type="primary"
         ):
 
-            if not patient_name.strip():
-
-                st.warning(
-                    "Please enter the patient name."
-                )
-
-            elif not patient_id.strip():
-
-                st.warning(
-                    "Please enter the Patient ID."
-                )
-
-            elif patient_exists(
-                patient_id.strip()
-            ):
-
-                st.error(
-                    "This Patient ID already exists."
-                )
-
-            else:
-
-                created_at = datetime.now().isoformat()
-
-                add_patient(
-                    patient_id=patient_id.strip(),
-                    name=patient_name.strip(),
-                    age=patient_age,
-                    sex=patient_sex,
-                    phone=patient_phone.strip(),
-                    clinical_notes=clinical_notes.strip(),
-                    created_at=created_at,
-                )
-
-                st.session_state.active_patient_id = (
-                    patient_id.strip()
-                )
-
-                st.success(
-                    f"Patient '{patient_name}' saved successfully."
-                )
-
-                st.rerun()
-
-    # ========================================================
-    # PATIENT RECORDS
-    # ========================================================
-
-    with tab2:
-
-        st.subheader("Patient Records")
-
-        patients = get_patients()
-
-        if not patients:
-
             st.info(
-                "No patients registered yet."
+                "Clinical assessment module selected: "
+                + diagnosis_type
             )
 
-        else:
 
-            for
+# ============================================================
+# REPORTS
+# ============================================================
+
+elif menu == "Reports":
+
+    st.title("📄 Clinical Reports")
+
+    if not st.session_state.active_patient_id:
+
+        st.warning(
+            "Select an active patient first."
+        )
+
+    else:
+
+        st.success(
+            "Active Patient: "
+            + st.session_state.active_patient_id
+        )
+
+        report_type = st.selectbox(
+            "Report Type",
+            [
+                "Patient Summary",
+                "Clinical Visit Report",
+                "Facial Analysis Report",
+                "Smile Design Report",
+                "Treatment Planning Report",
+            ]
+        )
+
+        if st.button(
+            "Prepare Report",
+            type="primary"
+        ):
+
+            st.success(
+                "Report preparation started: "
+                + report_type
+            )
+
+
+# ============================================================
+# SETTINGS
+# ============================================================
+
+elif menu == "Settings":
+
+    st.title("⚙️ Settings")
+
+    st.subheader("Application")
+
+    st.text_input(
+        "Clinic Name",
+        value="NAQ Dental Clinic"
+    )
+
+    st.selectbox(
+        "Language",
+        [
+            "English",
+            "Arabic",
+        ]
+    )
+
+    st.selectbox(
+        "Interface",
+        [
+            "Clinical",
+            "Research",
+            "Developer",
+        ]
+    )
+
+    st.divider()
+
+    st.subheader("Database")
+
+    st.success(
+        "SQLite Local Database — Connected"
+    )
+
+    st.caption(
+        "NAQclinixAI — Intelligent Dentistry, Perfect Harmony"
+    )
+
+    st.caption(
+        "Version 1.3"
+    )
