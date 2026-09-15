@@ -3,8 +3,10 @@ name = "naqclinixai"
 version = "0.1.0"
 description = "NAQclinixAI - Intelligent Dentistry, Perfect Harmony"
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.11,<3.14"
 dependencies = [
-    "streamlit[auth]>=1.61.1",
-    "Authlib>=1.3.2",
+    "streamlit[auth]>=1.61.1,<2.0",
 ]
+
+[tool.uv]
+package = false
