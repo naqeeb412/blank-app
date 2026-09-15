@@ -34,8 +34,7 @@ def initialize_database():
                 diagnosis TEXT,
                 treatment_plan TEXT,
                 notes TEXT,
-                created_at TEXT,
-                FOREIGN KEY (patient_id) REFERENCES patients(patient_id)
+                created_at TEXT
             )
         """)
         conn.commit()
