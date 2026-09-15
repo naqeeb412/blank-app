@@ -3,6 +3,7 @@ from pathlib import Path
 
 # ============================================================
 # NAQclinixAI Local Database
+# Version 1.3
 # ============================================================
 
 DATABASE_PATH = Path("naqclinixai.db")
@@ -23,6 +24,10 @@ def initialize_database():
 
     connection = get_connection()
 
+    # --------------------------------------------------------
+    # Patients
+    # --------------------------------------------------------
+
     connection.execute(
         """
         CREATE TABLE IF NOT EXISTS patients (
@@ -38,9 +43,36 @@ def initialize_database():
         """
     )
 
+    # --------------------------------------------------------
+    # Clinical Visits
+    # --------------------------------------------------------
+
+    connection.execute(
+        """
+        CREATE TABLE IF NOT EXISTS visits (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            patient_id TEXT NOT NULL,
+            visit_date TEXT NOT NULL,
+            visit_type TEXT,
+            chief_complaint TEXT,
+            clinical_findings TEXT,
+            diagnosis TEXT,
+            treatment_plan TEXT,
+            notes TEXT,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (patient_id)
+                REFERENCES patients(patient_id)
+        )
+        """
+    )
+
     connection.commit()
     connection.close()
 
+
+# ============================================================
+# PATIENT FUNCTIONS
+# ============================================================
 
 def add_patient(
     patient_id,
@@ -138,3 +170,77 @@ def patient_exists(patient_id):
     connection.close()
 
     return patient is not None
+
+
+# ============================================================
+# VISIT FUNCTIONS
+# ============================================================
+
+def add_visit(
+    patient_id,
+    visit_date,
+    visit_type,
+    chief_complaint,
+    clinical_findings,
+    diagnosis,
+    treatment_plan,
+    notes,
+    created_at
+):
+
+    connection = get_connection()
+
+    cursor = connection.execute(
+        """
+        INSERT INTO visits (
+            patient_id,
+            visit_date,
+            visit_type,
+            chief_complaint,
+            clinical_findings,
+            diagnosis,
+            treatment_plan,
+            notes,
+            created_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            patient_id,
+            visit_date,
+            visit_type,
+            chief_complaint,
+            clinical_findings,
+            diagnosis,
+            treatment_plan,
+            notes,
+            created_at
+        )
+    )
+
+    connection.commit()
+
+    visit_id = cursor.lastrowid
+
+    connection.close()
+
+    return visit_id
+
+
+def get_patient_visits(patient_id):
+
+    connection = get_connection()
+
+    visits = connection.execute(
+        """
+        SELECT *
+        FROM visits
+        WHERE patient_id = ?
+        ORDER BY id DESC
+        """,
+        (patient_id,)
+    ).fetchall()
+
+    connection.close()
+
+    return visits
