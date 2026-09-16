@@ -2,9 +2,9 @@ import streamlit as st
 from datetime import datetime, date
 
 # ============================================================
-# NAQclinixAI
+# NAQclinixAI - نظام إدارة عيادة الأسنان الذكي
 # Intelligent Dentistry, Perfect Harmony
-# Version 1.3
+# Version 2.0 - النسخة العربية
 # ============================================================
 
 st.set_page_config(
@@ -14,22 +14,25 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+from style import apply_rtl
+apply_rtl()
+
 # ============================================================
-# GOOGLE AUTHENTICATION
+# تسجيل الدخول عبر Google
 # ============================================================
 
 if not st.user.is_logged_in:
     st.title("🦷 NAQclinixAI")
-    st.subheader("Intelligent Dentistry, Perfect Harmony")
-    st.write("Please sign in to access your clinical dashboard.")
+    st.subheader("طب أسنان ذكي، انسجام مثالي")
+    st.write("الرجاء تسجيل الدخول للوصول إلى لوحة التحكم")
 
-    if st.button("🔐 Log in with Google", type="primary"):
+    if st.button("🔐 تسجيل الدخول عبر Google", type="primary"):
         st.login()
 
     st.stop()
 
 # ============================================================
-# DATABASE
+# قاعدة البيانات
 # ============================================================
 
 from database import (
@@ -44,32 +47,30 @@ from database import (
 initialize_database()
 
 # ============================================================
-# SESSION STATE
+# حالة الجلسة
 # ============================================================
 
-if "active_patient_id" not in st.session_state:
-    st.session_state.active_patient_id = None
 if "active_patient_id" not in st.session_state:
     st.session_state.active_patient_id = None
 
 
 # ============================================================
-# SIDEBAR
+# الشريط الجانبي
 # ============================================================
 
 st.sidebar.title("🦷 NAQclinixAI")
-st.sidebar.caption("Intelligent Dentistry, Perfect Harmony")
+st.sidebar.caption("طب أسنان ذكي، انسجام مثالي")
 
 menu = st.sidebar.radio(
-    "Navigation",
+    "القائمة الرئيسية",
     [
-        "Dashboard",
-        "Patient",
-        "Facial Analysis",
-        "Smile Design",
-        "Clinical Diagnosis",
-        "Reports",
-        "Settings",
+        "لوحة التحكم",
+        "المرضى",
+        "تحليل الوجه",
+        "تصميم الابتسامة",
+        "التشخيص السريري",
+        "التقارير",
+        "الإعدادات",
     ],
 )
 
@@ -77,155 +78,117 @@ st.sidebar.divider()
 
 if st.session_state.active_patient_id:
     st.sidebar.success(
-        "Active Patient: "
-        + st.session_state.active_patient_id
+        "المريض النشط: " + st.session_state.active_patient_id
     )
 else:
-    st.sidebar.info("No active patient")
+    st.sidebar.info("لا يوجد مريض نشط")
+
+st.sidebar.divider()
+
+st.sidebar.write(f"👤 {st.user.name}")
+st.sidebar.caption(st.user.email)
+
+if st.sidebar.button("🚪 تسجيل الخروج"):
+    st.logout()
 
 st.sidebar.divider()
 st.sidebar.caption("DentoFacial-HarmonizeAI")
-st.sidebar.caption("Version 1.3")
+st.sidebar.caption("الإصدار 2.0")
 
 
 # ============================================================
-# DASHBOARD
+# لوحة التحكم
 # ============================================================
 
-if menu == "Dashboard":
+if menu == "لوحة التحكم":
 
     st.title("🦷 NAQclinixAI")
-    st.subheader("Clinical Dashboard")
+    st.subheader("لوحة التحكم السريرية")
 
     patients = get_patients()
 
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.metric("Patients", len(patients))
-
+        st.metric("المرضى", len(patients))
     with col2:
-        st.metric("Clinical Visits", "—")
-
+        st.metric("الزيارات", "—")
     with col3:
-        st.metric("Analyses", "—")
-
+        st.metric("التحليلات", "—")
     with col4:
-        st.metric("Reports", "—")
+        st.metric("التقارير", "—")
 
     st.divider()
 
-    st.subheader("Clinical Workflow")
+    st.subheader("مسار العمل السريري")
 
     st.info(
         """
-        1. Patient Registration
-        2. Clinical Patient Record
-        3. Clinical Visit
-        4. Facial & Smile Analysis
-        5. Clinical Diagnosis
-        6. Treatment Planning
-        7. Clinical Report
+        1. تسجيل مريض جديد
+        2. السجل السريري للمريض
+        3. الزيارة السريرية
+        4. تحليل الوجه والابتسامة
+        5. التشخيص السريري
+        6. خطة العلاج
+        7. التقرير السريري
         """
     )
 
     if st.session_state.active_patient_id:
         st.success(
-            "Active patient: "
-            + st.session_state.active_patient_id
+            "المريض النشط: " + st.session_state.active_patient_id
         )
 
 
 # ============================================================
-# PATIENT
+# المرضى
 # ============================================================
 
-elif menu == "Patient":
+elif menu == "المرضى":
 
-    st.title("👤 Patient Management")
+    st.title("👤 إدارة المرضى")
 
     tab1, tab2, tab3 = st.tabs(
-        [
-            "New Patient",
-            "Patient Records",
-            "Clinical Record",
-        ]
+        ["مريض جديد", "سجلات المرضى", "السجل السريري"]
     )
 
-    # ========================================================
-    # NEW PATIENT
-    # ========================================================
-
+    # ---------- مريض جديد ----------
     with tab1:
 
-        st.subheader("Register New Patient")
+        st.subheader("تسجيل مريض جديد")
 
         col1, col2 = st.columns(2)
 
         with col1:
-
-            patient_name = st.text_input(
-                "Patient Name"
-            )
-
+            patient_name = st.text_input("اسم المريض")
             patient_id = st.text_input(
-                "Patient ID",
-                placeholder="Example: NAQ-0002"
+                "رقم المريض",
+                placeholder="مثال: NAQ-0002"
             )
-
-            patient_phone = st.text_input(
-                "Phone"
-            )
+            patient_phone = st.text_input("رقم الهاتف")
 
         with col2:
-
             patient_age = st.number_input(
-                "Age",
-                min_value=0,
-                max_value=120,
-                value=25
+                "العمر", min_value=0, max_value=120, value=25
             )
-
             patient_sex = st.selectbox(
-                "Sex",
-                [
-                    "Male",
-                    "Female",
-                    "Other",
-                ]
+                "الجنس", ["ذكر", "أنثى", "آخر"]
             )
 
-        clinical_notes = st.text_area(
-            "Initial Clinical Notes"
-        )
+        clinical_notes = st.text_area("ملاحظات سريرية أولية")
 
-        if st.button(
-            "Save Patient",
-            type="primary"
-        ):
+        if st.button("💾 حفظ المريض", type="primary"):
 
             if not patient_name.strip():
-
-                st.warning(
-                    "Please enter the patient name."
-                )
+                st.warning("الرجاء إدخال اسم المريض.")
 
             elif not patient_id.strip():
+                st.warning("الرجاء إدخال رقم المريض.")
 
-                st.warning(
-                    "Please enter the Patient ID."
-                )
-
-            elif patient_exists(
-                patient_id.strip()
-            ):
-
-                st.error(
-                    "This Patient ID already exists."
-                )
+            elif patient_exists(patient_id.strip()):
+                st.error("رقم المريض مسجل مسبقًا.")
 
             else:
-
                 created_at = datetime.now().isoformat()
 
                 add_patient(
@@ -238,209 +201,117 @@ elif menu == "Patient":
                     created_at=created_at,
                 )
 
-                st.session_state.active_patient_id = (
-                    patient_id.strip()
-                )
-
-                st.success(
-                    "Patient saved successfully."
-                )
-
+                st.session_state.active_patient_id = patient_id.strip()
+                st.success("تم حفظ المريض بنجاح.")
                 st.rerun()
 
-    # ========================================================
-    # PATIENT RECORDS
-    # ========================================================
-
+    # ---------- سجلات المرضى ----------
     with tab2:
 
-        st.subheader("Patient Records")
+        st.subheader("سجلات المرضى")
 
         patients = get_patients()
 
         if not patients:
-
-            st.info(
-                "No patients registered yet."
-            )
-
+            st.info("لا يوجد مرضى مسجلون بعد.")
         else:
-
             for patient in patients:
-
                 with st.container(border=True):
 
-                    col1, col2, col3 = st.columns(
-                        [3, 2, 1]
-                    )
+                    col1, col2, col3 = st.columns([3, 2, 1])
 
                     with col1:
-
-                        st.markdown(
-                            "### "
-                            + patient["name"]
-                        )
-
+                        st.markdown("### " + patient["name"])
                         st.caption(
-                            "Patient ID: "
-                            + patient["patient_id"]
+                            "رقم المريض: " + patient["patient_id"]
                         )
 
                     with col2:
-
-                        st.write(
-                            "Age: "
-                            + str(patient["age"])
-                        )
-
-                        st.write(
-                            "Sex: "
-                            + str(patient["sex"])
-                        )
+                        st.write("العمر: " + str(patient["age"]))
+                        st.write("الجنس: " + str(patient["sex"]))
 
                     with col3:
-
                         if st.button(
-                            "Select",
-                            key=(
-                                "select_"
-                                + patient["patient_id"]
-                            ),
+                            "اختيار",
+                            key="select_" + patient["patient_id"],
                         ):
-
                             st.session_state.active_patient_id = (
                                 patient["patient_id"]
                             )
-
                             st.rerun()
 
                         if (
                             st.session_state.active_patient_id
                             == patient["patient_id"]
                         ):
+                            st.success("نشط")
 
-                            st.success("ACTIVE")
-
-    # ========================================================
-    # CLINICAL RECORD
-    # ========================================================
-
+    # ---------- السجل السريري ----------
     with tab3:
 
-        st.subheader("Clinical Patient Record")
+        st.subheader("السجل السريري للمريض")
 
         active_id = st.session_state.active_patient_id
 
         if not active_id:
-
-            st.warning(
-                "Select a patient first from Patient Records."
-            )
-
+            st.warning("اختر مريضًا أولًا من سجلات المرضى.")
         else:
-
             patients = get_patients()
-
             active_patient = None
 
             for patient in patients:
-
                 if patient["patient_id"] == active_id:
-
                     active_patient = patient
                     break
 
             if active_patient:
 
-                st.markdown(
-                    "## 👤 "
-                    + active_patient["name"]
-                )
-
+                st.markdown("## 👤 " + active_patient["name"])
                 st.caption(
-                    "Patient ID: "
-                    + active_patient["patient_id"]
+                    "رقم المريض: " + active_patient["patient_id"]
                 )
 
-                visits = get_patient_visits(
-                    active_id
-                )
+                visits = get_patient_visits(active_id)
 
                 col1, col2, col3 = st.columns(3)
 
                 with col1:
-
-                    st.metric(
-                        "Age",
-                        active_patient["age"]
-                    )
-
+                    st.metric("العمر", active_patient["age"])
                 with col2:
-
-                    st.metric(
-                        "Sex",
-                        active_patient["sex"]
-                    )
-
+                    st.metric("الجنس", active_patient["sex"])
                 with col3:
-
-                    st.metric(
-                        "Visits",
-                        len(visits)
-                    )
+                    st.metric("الزيارات", len(visits))
 
                 st.divider()
 
-                # ------------------------------------------------
-                # NEW CLINICAL VISIT
-                # ------------------------------------------------
-
-                st.subheader("➕ New Clinical Visit")
+                st.subheader("➕ زيارة سريرية جديدة")
 
                 visit_date = st.date_input(
-                    "Visit Date",
-                    value=date.today()
+                    "تاريخ الزيارة", value=date.today()
                 )
 
                 visit_type = st.selectbox(
-                    "Visit Type",
+                    "نوع الزيارة",
                     [
-                        "Initial Examination",
-                        "Follow-up",
-                        "Emergency",
-                        "Aesthetic Consultation",
-                        "Orthodontic Consultation",
-                        "Prosthodontic Consultation",
-                        "Treatment Visit",
-                        "Review",
-                        "Other",
-                    ]
+                        "فحص أولي",
+                        "متابعة",
+                        "طارئة",
+                        "استشارة تجميلية",
+                        "استشارة تقويم",
+                        "استشارة تعويضات",
+                        "زيارة علاجية",
+                        "مراجعة",
+                        "أخرى",
+                    ],
                 )
 
-                chief_complaint = st.text_area(
-                    "Chief Complaint"
-                )
+                chief_complaint = st.text_area("الشكوى الرئيسية")
+                clinical_findings = st.text_area("الفحوصات السريرية")
+                diagnosis = st.text_area("التشخيص")
+                treatment_plan = st.text_area("خطة العلاج")
+                visit_notes = st.text_area("ملاحظات الزيارة")
 
-                clinical_findings = st.text_area(
-                    "Clinical Findings"
-                )
-
-                diagnosis = st.text_area(
-                    "Diagnosis"
-                )
-
-                treatment_plan = st.text_area(
-                    "Treatment Plan"
-                )
-
-                visit_notes = st.text_area(
-                    "Visit Notes"
-                )
-
-                if st.button(
-                    "Save Clinical Visit",
-                    type="primary"
-                ):
+                if st.button("💾 حفظ الزيارة", type="primary"):
 
                     created_at = datetime.now().isoformat()
 
@@ -456,32 +327,17 @@ elif menu == "Patient":
                         created_at=created_at,
                     )
 
-                    st.success(
-                        "Clinical visit saved successfully."
-                    )
-
+                    st.success("تم حفظ الزيارة بنجاح.")
                     st.rerun()
 
                 st.divider()
+                st.subheader("📋 سجل الزيارات")
 
-                # ------------------------------------------------
-                # VISIT HISTORY
-                # ------------------------------------------------
-
-                st.subheader("📋 Visit History")
-
-                visits = get_patient_visits(
-                    active_id
-                )
+                visits = get_patient_visits(active_id)
 
                 if not visits:
-
-                    st.info(
-                        "No clinical visits recorded yet."
-                    )
-
+                    st.info("لا توجد زيارات مسجلة بعد.")
                 else:
-
                     for visit in visits:
 
                         title = (
@@ -492,276 +348,176 @@ elif menu == "Patient":
 
                         with st.expander(title):
 
-                            st.write(
-                                "**Chief Complaint:**"
-                            )
+                            st.write("**الشكوى الرئيسية:**")
+                            st.write(visit["chief_complaint"] or "—")
 
-                            st.write(
-                                visit["chief_complaint"]
-                                or "—"
-                            )
+                            st.write("**الفحوصات السريرية:**")
+                            st.write(visit["clinical_findings"] or "—")
 
-                            st.write(
-                                "**Clinical Findings:**"
-                            )
+                            st.write("**التشخيص:**")
+                            st.write(visit["diagnosis"] or "—")
 
-                            st.write(
-                                visit["clinical_findings"]
-                                or "—"
-                            )
+                            st.write("**خطة العلاج:**")
+                            st.write(visit["treatment_plan"] or "—")
 
-                            st.write(
-                                "**Diagnosis:**"
-                            )
-
-                            st.write(
-                                visit["diagnosis"]
-                                or "—"
-                            )
-
-                            st.write(
-                                "**Treatment Plan:**"
-                            )
-
-                            st.write(
-                                visit["treatment_plan"]
-                                or "—"
-                            )
-
-                            st.write(
-                                "**Notes:**"
-                            )
-
-                            st.write(
-                                visit["notes"]
-                                or "—"
-                            )
+                            st.write("**ملاحظات:**")
+                            st.write(visit["notes"] or "—")
 
 
 # ============================================================
-# FACIAL ANALYSIS
+# تحليل الوجه
 # ============================================================
 
-elif menu == "Facial Analysis":
+elif menu == "تحليل الوجه":
 
-    st.title("📐 Facial Analysis")
+    st.title("📐 تحليل الوجه")
 
     if not st.session_state.active_patient_id:
-
-        st.warning(
-            "Select an active patient first."
-        )
-
+        st.warning("اختر مريضًا نشطًا أولًا.")
     else:
-
         st.success(
-            "Active Patient: "
-            + st.session_state.active_patient_id
+            "المريض النشط: " + st.session_state.active_patient_id
         )
-
-        st.subheader(
-            "Dentofacial Analysis Framework"
-        )
+        st.subheader("إطار تحليل الوجه والأسنان")
 
         measurements = [
-            "Bizygomatic Width",
-            "Total Facial Height",
-            "Lower Facial Height",
-            "Facial Proportions",
-            "Facial Symmetry",
-            "Facial Harmony",
+            "العرض الوجني",
+            "الارتفاع الكلي للوجه",
+            "ارتفاع الوجه السفلي",
+            "تناسب الوجه",
+            "تماثل الوجه",
+            "انسجام الوجه",
         ]
 
         for item in measurements:
-
-            st.checkbox(
-                item,
-                key="facial_" + item
-            )
+            st.checkbox(item, key="facial_" + item)
 
         st.info(
-            "AI landmark detection and quantitative facial analysis will be integrated in the next development stage."
+            "سيتم إضافة الكشف الآلي عن المعالم والتحليل الكمي "
+            "للوجه في المرحلة التالية من التطوير."
         )
 
 
 # ============================================================
-# SMILE DESIGN
+# تصميم الابتسامة
 # ============================================================
 
-elif menu == "Smile Design":
+elif menu == "تصميم الابتسامة":
 
-    st.title("😁 AI Smile Design")
+    st.title("😁 تصميم الابتسامة بالذكاء الاصطناعي")
 
     if not st.session_state.active_patient_id:
-
-        st.warning(
-            "Select an active patient first."
-        )
-
+        st.warning("اختر مريضًا نشطًا أولًا.")
     else:
-
         st.success(
-            "Active Patient: "
-            + st.session_state.active_patient_id
+            "المريض النشط: " + st.session_state.active_patient_id
         )
 
         options = [
-            "Digital Smile Design",
-            "Tooth Proportion Analysis",
-            "Smile Line",
-            "Gingival Display",
-            "Incisal Position",
-            "Dental Midline",
+            "التصميم الرقمي للابتسامة",
+            "تحليل تناسب الأسنان",
+            "خط الابتسامة",
+            "ظهور اللثة",
+            "موضع الحواف",
+            "خط الوسط السني",
         ]
 
         selected = st.multiselect(
-            "Select analysis components",
-            options
+            "اختر مكونات التحليل", options
         )
 
         if selected:
-
-            st.success(
-                str(len(selected))
-                + " components selected."
-            )
+            st.success(str(len(selected)) + " مكونات مختارة.")
 
 
 # ============================================================
-# CLINICAL DIAGNOSIS
+# التشخيص السريري
 # ============================================================
 
-elif menu == "Clinical Diagnosis":
+elif menu == "التشخيص السريري":
 
-    st.title("🩺 Clinical Diagnosis")
+    st.title("🩺 التشخيص السريري")
 
     if not st.session_state.active_patient_id:
-
-        st.warning(
-            "Select an active patient first."
-        )
-
+        st.warning("اختر مريضًا نشطًا أولًا.")
     else:
-
         st.success(
-            "Active Patient: "
-            + st.session_state.active_patient_id
+            "المريض النشط: " + st.session_state.active_patient_id
         )
 
         diagnosis_type = st.selectbox(
-            "Clinical Module",
+            "الوحدة السريرية",
             [
-                "General Assessment",
-                "Aesthetic Dentistry",
-                "Orthodontics",
-                "Prosthodontics",
-                "Gingival Aesthetics",
-                "Endodontics",
-            ]
+                "تقييم عام",
+                "طب الأسنان التجميلي",
+                "تقويم الأسنان",
+                "التعويضات السنية",
+                "تجميل اللثة",
+                "علاج الجذور",
+            ],
         )
 
-        findings = st.text_area(
-            "Clinical Findings"
-        )
+        findings = st.text_area("الفحوصات السريرية")
 
-        if st.button(
-            "Generate Assessment",
-            type="primary"
-        ):
-
+        if st.button("🔬 توليد التقييم", type="primary"):
             st.info(
-                "Clinical assessment module selected: "
-                + diagnosis_type
+                "الوحدة السريرية المختارة: " + diagnosis_type
             )
 
 
 # ============================================================
-# REPORTS
+# التقارير
 # ============================================================
 
-elif menu == "Reports":
+elif menu == "التقارير":
 
-    st.title("📄 Clinical Reports")
+    st.title("📄 التقارير السريرية")
 
     if not st.session_state.active_patient_id:
-
-        st.warning(
-            "Select an active patient first."
-        )
-
+        st.warning("اختر مريضًا نشطًا أولًا.")
     else:
-
         st.success(
-            "Active Patient: "
-            + st.session_state.active_patient_id
+            "المريض النشط: " + st.session_state.active_patient_id
         )
 
         report_type = st.selectbox(
-            "Report Type",
+            "نوع التقرير",
             [
-                "Patient Summary",
-                "Clinical Visit Report",
-                "Facial Analysis Report",
-                "Smile Design Report",
-                "Treatment Planning Report",
-            ]
+                "ملخص المريض",
+                "تقرير الزيارة السريرية",
+                "تقرير تحليل الوجه",
+                "تقرير تصميم الابتسامة",
+                "تقرير خطة العلاج",
+            ],
         )
 
-        if st.button(
-            "Prepare Report",
-            type="primary"
-        ):
-
+        if st.button("📄 إعداد التقرير", type="primary"):
             st.success(
-                "Report preparation started: "
-                + report_type
+                "بدأ إعداد التقرير: " + report_type
             )
 
 
 # ============================================================
-# SETTINGS
+# الإعدادات
 # ============================================================
 
-elif menu == "Settings":
+elif menu == "الإعدادات":
 
-    st.title("⚙️ Settings")
+    st.title("⚙️ الإعدادات")
+    st.subheader("التطبيق")
 
-    st.subheader("Application")
+    st.text_input("اسم العيادة", value="عيادة NAQ لطب الأسنان")
 
-    st.text_input(
-        "Clinic Name",
-        value="NAQ Dental Clinic"
-    )
-
+    st.selectbox("اللغة", ["العربية", "English"])
     st.selectbox(
-        "Language",
-        [
-            "English",
-            "Arabic",
-        ]
-    )
-
-    st.selectbox(
-        "Interface",
-        [
-            "Clinical",
-            "Research",
-            "Developer",
-        ]
+        "الواجهة", ["سريرية", "بحثية", "مطوّر"]
     )
 
     st.divider()
-
-    st.subheader("Database")
-
-    st.success(
-        "SQLite Local Database — Connected"
-    )
+    st.subheader("قاعدة البيانات")
+    st.success("قاعدة بيانات Supabase — متصلة")
 
     st.caption(
-        "NAQclinixAI — Intelligent Dentistry, Perfect Harmony"
+        "NAQclinixAI — طب أسنان ذكي، انسجام مثالي"
     )
-
-    st.caption(
-        "Version 1.3"
-    )
+    st.caption("الإصدار 2.0")
