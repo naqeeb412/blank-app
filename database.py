@@ -102,3 +102,15 @@ def upload_photo(patient_id, file_bytes, file_name, photo_type):
     url = sb.storage.from_("patient-photos").get_public_url(path)
     add_photo(patient_id, photo_type, url)
     return url
+    
+
+def delete_photo(photo_id, photo_url):
+    sb = get_supabase()
+    # استخراج مسار الصورة من الرابط
+    if "/patient-photos/" in photo_url:
+        path = photo_url.split("/patient-photos/")[-1]
+        try:
+            sb.storage.from_("patient-photos").remove([path])
+        except Exception:
+            pass
+    sb.table("photos").delete().eq("id", photo_id).execute()
