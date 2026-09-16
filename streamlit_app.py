@@ -4,7 +4,7 @@ from datetime import datetime, date
 # ============================================================
 # NAQclinixAI - نظام إدارة عيادة الأسنان الذكي
 # Intelligent Dentistry, Perfect Harmony
-# Version 2.0 - النسخة العربية
+# Version 2.1 - مع صور المرضى
 # ============================================================
 
 st.set_page_config(
@@ -42,6 +42,8 @@ from database import (
     patient_exists,
     add_visit,
     get_patient_visits,
+    upload_photo,
+    get_patient_photos,
 )
 
 initialize_database()
@@ -93,7 +95,7 @@ if st.sidebar.button("🚪 تسجيل الخروج"):
 
 st.sidebar.divider()
 st.sidebar.caption("DentoFacial-HarmonizeAI")
-st.sidebar.caption("الإصدار 2.0")
+st.sidebar.caption("الإصدار 2.1")
 
 
 # ============================================================
@@ -119,7 +121,6 @@ if menu == "لوحة التحكم":
         st.metric("التقارير", "—")
 
     st.divider()
-
     st.subheader("مسار العمل السريري")
 
     st.info(
@@ -284,6 +285,10 @@ elif menu == "المرضى":
 
                 st.divider()
 
+                # ------------------------------------------------
+                # زيارة سريرية جديدة
+                # ------------------------------------------------
+
                 st.subheader("➕ زيارة سريرية جديدة")
 
                 visit_date = st.date_input(
@@ -329,72 +334,78 @@ elif menu == "المرضى":
 
                     st.success("تم حفظ الزيارة بنجاح.")
                     st.rerun()
-st.divider()
-st.subheader("📸 صور المريض")
 
-from database import upload_photo, get_patient_photos
-
-photo_type = st.selectbox(
-    "نوع الصورة",
-    [
-        "صورة أمامية",
-        "صورة جانبية",
-        "صورة الابتسامة",
-        "أشعة",
-        "أخرى",
-    ],
-    key="photo_type_" + active_id,
-)
-
-uploaded_file = st.file_uploader(
-    "اختر صورة (JPG, PNG)",
-    type=["jpg", "jpeg", "png"],
-    key="uploader_" + active_id,
-)
-
-if uploaded_file is not None:
-    st.image(
-        uploaded_file,
-        caption="معاينة الصورة",
-        width=300,
-    )
-
-    if st.button(
-        "💾 حفظ الصورة",
-        type="primary",
-        key="save_photo_" + active_id,
-    ):
-        try:
-            file_bytes = uploaded_file.getvalue()
-            upload_photo(
-                active_id,
-                file_bytes,
-                uploaded_file.name,
-                photo_type,
-            )
-            st.success("تم رفع الصورة بنجاح.")
-            st.rerun()
-        except Exception as e:
-            st.error(f"خطأ في رفع الصورة: {str(e)}")
-
-# عرض الصور المحفوظة
-photos = get_patient_photos(active_id)
-
-if photos:
-    st.write("### 🖼️ الصور المحفوظة")
-
-    cols = st.columns(3)
-    for i, photo in enumerate(photos):
-        with cols[i % 3]:
-            st.image(
-                photo["photo_url"],
-                caption=photo["photo_type"],
-                use_container_width=True,
-            )
-
-st.divider()
-st.subheader("📋 سجل الزيارات")
                 st.divider()
+
+                # ------------------------------------------------
+                # صور المريض
+                # ------------------------------------------------
+
+                st.subheader("📸 صور المريض")
+
+                photo_type = st.selectbox(
+                    "نوع الصورة",
+                    [
+                        "صورة أمامية",
+                        "صورة جانبية",
+                        "صورة الابتسامة",
+                        "أشعة",
+                        "أخرى",
+                    ],
+                    key="photo_type_" + active_id,
+                )
+
+                uploaded_file = st.file_uploader(
+                    "اختر صورة (JPG, PNG)",
+                    type=["jpg", "jpeg", "png"],
+                    key="uploader_" + active_id,
+                )
+
+                if uploaded_file is not None:
+                    st.image(
+                        uploaded_file,
+                        caption="معاينة الصورة",
+                        width=300,
+                    )
+
+                    if st.button(
+                        "💾 حفظ الصورة",
+                        type="primary",
+                        key="save_photo_" + active_id,
+                    ):
+                        try:
+                            file_bytes = uploaded_file.getvalue()
+                            upload_photo(
+                                active_id,
+                                file_bytes,
+                                uploaded_file.name,
+                                photo_type,
+                            )
+                            st.success("تم رفع الصورة بنجاح.")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"خطأ في رفع الصورة: {str(e)}")
+
+                photos = get_patient_photos(active_id)
+
+                if photos:
+                    st.write("### 🖼️ الصور المحفوظة")
+
+                    cols = st.columns(3)
+                    for i, photo in enumerate(photos):
+                        with cols[i % 3]:
+                            st.image(
+                                photo["photo_url"],
+                                caption=photo["photo_type"],
+                                use_container_width=True,
+                            )
+
+                st.divider()
+
+                # ------------------------------------------------
+                # سجل الزيارات
+                # ------------------------------------------------
+
                 st.subheader("📋 سجل الزيارات")
 
                 visits = get_patient_visits(active_id)
@@ -584,4 +595,4 @@ elif menu == "الإعدادات":
     st.caption(
         "NAQclinixAI — طب أسنان ذكي، انسجام مثالي"
     )
-    st.caption("الإصدار 2.0")
+    st.caption("الإصدار 2.1")
