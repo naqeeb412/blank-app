@@ -356,12 +356,29 @@ elif menu == "المرضى":
                 )
 
                 uploaded_file = st.file_uploader(
-                    "اختر صورة (JPG, PNG)",
-                    type=["jpg", "jpeg", "png"],
-                    key="uploader_" + active_id,
-                )
+    f"ارفع {ptype}",
+    type=["jpg", "jpeg", "png"],
+    key=f"uploader_{active_id}_{ptype}",
+)
 
-                if uploaded_file is not None:
+if uploaded_file is not None:
+    file_size_mb = (
+        uploaded_file.size / (1024 * 1024)
+    )
+
+    if file_size_mb > 10:
+        st.error(
+            f"حجم الصورة كبير جدًا "
+            f"({file_size_mb:.1f} MB). "
+            f"الحد الأقصى 10 MB."
+        )
+        st.stop()
+
+    st.info(
+        f"حجم الصورة: {file_size_mb:.2f} MB"
+    )
+
+    col_a, col_b = st.columns([1, 2])
                     st.image(
                         uploaded_file,
                         caption="معاينة الصورة",
