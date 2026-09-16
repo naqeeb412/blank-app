@@ -329,7 +329,71 @@ elif menu == "المرضى":
 
                     st.success("تم حفظ الزيارة بنجاح.")
                     st.rerun()
+st.divider()
+st.subheader("📸 صور المريض")
 
+from database import upload_photo, get_patient_photos
+
+photo_type = st.selectbox(
+    "نوع الصورة",
+    [
+        "صورة أمامية",
+        "صورة جانبية",
+        "صورة الابتسامة",
+        "أشعة",
+        "أخرى",
+    ],
+    key="photo_type_" + active_id,
+)
+
+uploaded_file = st.file_uploader(
+    "اختر صورة (JPG, PNG)",
+    type=["jpg", "jpeg", "png"],
+    key="uploader_" + active_id,
+)
+
+if uploaded_file is not None:
+    st.image(
+        uploaded_file,
+        caption="معاينة الصورة",
+        width=300,
+    )
+
+    if st.button(
+        "💾 حفظ الصورة",
+        type="primary",
+        key="save_photo_" + active_id,
+    ):
+        try:
+            file_bytes = uploaded_file.getvalue()
+            upload_photo(
+                active_id,
+                file_bytes,
+                uploaded_file.name,
+                photo_type,
+            )
+            st.success("تم رفع الصورة بنجاح.")
+            st.rerun()
+        except Exception as e:
+            st.error(f"خطأ في رفع الصورة: {str(e)}")
+
+# عرض الصور المحفوظة
+photos = get_patient_photos(active_id)
+
+if photos:
+    st.write("### 🖼️ الصور المحفوظة")
+
+    cols = st.columns(3)
+    for i, photo in enumerate(photos):
+        with cols[i % 3]:
+            st.image(
+                photo["photo_url"],
+                caption=photo["photo_type"],
+                use_container_width=True,
+            )
+
+st.divider()
+st.subheader("📋 سجل الزيارات")
                 st.divider()
                 st.subheader("📋 سجل الزيارات")
 
