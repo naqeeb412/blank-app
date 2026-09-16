@@ -36,10 +36,12 @@ def add_patient(patient_id, name, age, sex, phone, clinical_notes, created_at):
 
 def get_patients():
     sb = get_supabase()
-    res = sb.table("patients").select("*").eq(
-        "user_email", _user_email()
-    ).order("created_at", desc=True).execute()
-    return res.data or []
+    try:
+        res = sb.table("patients").select("*").execute()
+        return res.data or []
+    except Exception as e:
+        st.error(f"Supabase Error: {str(e)}")
+        return []
 
 
 def patient_exists(patient_id):
