@@ -95,7 +95,26 @@ def get_patient_photos(patient_id):
 
 def upload_photo(patient_id, file_bytes, file_name, photo_type):
     sb = get_supabase()
-    path = f"{patient_id}/{photo_type}_{file_name}"
+
+    # تحويل النوع العربي إلى مفتاح آمن
+    type_map = {
+        "صورة أمامية": "front",
+        "صورة جانبية": "side",
+        "صورة الابتسامة": "smile",
+        "أشعة": "xray",
+        "أخرى": "other",
+    }
+    type_key = type_map.get(photo_type, "other")
+
+    # تنظيف اسم الملف من المسافات والأحرف العربية
+    import re
+    from datetime import datetime
+    safe_name = re.sub(r"[^a-zA-Z0-9._-]", "_", file_name)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    # مسار آمن بالكامل بالإنجليزية
+    path = f"{patient_id}/{type_key}_{timestamp}_{safe_name}"
+
     sb.storage.from_("patient-photos").upload(
         path, file_bytes, {"content-type": "image/jpeg"}
     )
