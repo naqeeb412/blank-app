@@ -366,12 +366,32 @@ elif menu == "المرضى":
                 for tab, ptype in zip(photo_tabs, photo_types):
                     with tab:
 
-                        uploaded_file = st.file_uploader(
-                            f"ارفع {ptype}",
-                            type=["jpg", "jpeg", "png"],
-                            key=f"uploader_{active_id}_{ptype}",
-                        )
+                        st.write("**الطريقة 1: رفع صورة من الجهاز**")
+uploaded_file = st.file_uploader(
+    f"ارفع {ptype}",
+    type=["jpg", "jpeg", "png"],
+    key=f"uploader_{active_id}_{ptype}",
+)
 
+st.write("**أو**")
+st.write("**الطريقة 2: لصق رابط صورة مباشر**")
+
+url_input = st.text_input(
+    f"رابط {ptype}",
+    placeholder="https://example.com/photo.jpg",
+    key=f"url_{active_id}_{ptype}",
+)
+
+if url_input and st.button(
+    f"💾 حفظ من الرابط",
+    key=f"save_url_{active_id}_{ptype}",
+):
+    try:
+        add_photo(active_id, ptype, url_input)
+        st.success("تم حفظ الرابط بنجاح.")
+        st.rerun()
+    except Exception as e:
+        st.error(f"خطأ: {str(e)}")
                         if uploaded_file is not None:
                             file_size_mb = (
                                 uploaded_file.size / (1024 * 1024)
