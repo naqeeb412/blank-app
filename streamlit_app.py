@@ -3,8 +3,7 @@ from datetime import datetime, date
 
 # ============================================================
 # NAQclinixAI - نظام إدارة عيادة الأسنان الذكي
-# Intelligent Dentistry, Perfect Harmony
-# Version 2.2 - مع نظام صور متكامل
+# Version 2.3 - مع رفع الصور وحفظها عبر رابط
 # ============================================================
 
 st.set_page_config(
@@ -18,7 +17,7 @@ from style import apply_rtl
 apply_rtl()
 
 # ============================================================
-# تسجيل الدخول عبر Google
+# تسجيل الدخول
 # ============================================================
 
 if not st.user.is_logged_in:
@@ -45,6 +44,7 @@ from database import (
     upload_photo,
     get_patient_photos,
     delete_photo,
+    add_photo,
 )
 
 initialize_database()
@@ -96,7 +96,7 @@ if st.sidebar.button("🚪 تسجيل الخروج"):
 
 st.sidebar.divider()
 st.sidebar.caption("DentoFacial-HarmonizeAI")
-st.sidebar.caption("الإصدار 2.2")
+st.sidebar.caption("الإصدار 2.3")
 
 
 # ============================================================
@@ -154,7 +154,6 @@ elif menu == "المرضى":
         ["مريض جديد", "سجلات المرضى", "السجل السريري"]
     )
 
-    # ---------- مريض جديد ----------
     with tab1:
 
         st.subheader("تسجيل مريض جديد")
@@ -207,7 +206,6 @@ elif menu == "المرضى":
                 st.success("تم حفظ المريض بنجاح.")
                 st.rerun()
 
-    # ---------- سجلات المرضى ----------
     with tab2:
 
         st.subheader("سجلات المرضى")
@@ -248,7 +246,6 @@ elif menu == "المرضى":
                         ):
                             st.success("نشط")
 
-    # ---------- السجل السريري ----------
     with tab3:
 
         st.subheader("السجل السريري للمريض")
@@ -339,12 +336,12 @@ elif menu == "المرضى":
                 st.divider()
 
                 # ------------------------------------------------
-                # صور المريض - نظام متكامل بالتبويبات
+                # صور المريض
                 # ------------------------------------------------
 
                 st.subheader("📸 صور المريض")
                 st.caption(
-                    "ارفع صور المريض مصنّفة حسب النوع — الحد الأقصى 10 MB للصورة"
+                    "ارفع صورة من الجهاز أو الصق رابط صورة مباشر"
                 )
 
                 photo_tabs = st.tabs(
@@ -366,88 +363,75 @@ elif menu == "المرضى":
                 for tab, ptype in zip(photo_tabs, photo_types):
                     with tab:
 
+                        # الطريقة 1: رفع صورة
                         st.write("**الطريقة 1: رفع صورة من الجهاز**")
-uploaded_file = st.file_uploader(
-    f"ارفع {ptype}",
-    type=["jpg", "jpeg", "png"],
-    key=f"uploader_{active_id}_{ptype}",
-)
 
-st.write("**أو**")
-st.write("**الطريقة 2: لصق رابط صورة مباشر**")
+                        uploaded_file = st.file_uploader(
+                            f"ارفع {ptype}",
+                            type=["jpg", "jpeg", "png"],
+                            key=f"uploader_{active_id}_{ptype}",
+                        )
 
-url_input = st.text_input(
-    f"رابط {ptype}",
-    placeholder="https://example.com/photo.jpg",
-    key=f"url_{active_id}_{ptype}",
-)
-
-if url_input and st.button(
-    f"💾 حفظ من الرابط",
-    key=f"save_url_{active_id}_{ptype}",
-):
-    try:
-        add_photo(active_id, ptype, url_input)
-        st.success("تم حفظ الرابط بنجاح.")
-        st.rerun()
-    except Exception as e:
-        st.error(f"خطأ: {str(e)}")
                         if uploaded_file is not None:
-                            file_size_mb = (
-                                uploaded_file.size / (1024 * 1024)
-                            )
+                            file_size_mb = uploaded_file.size / (1024 * 1024)
 
                             if file_size_mb > 10:
                                 st.error(
-                                    f"حجم الصورة كبير جدًا "
-                                    f"({file_size_mb:.1f} MB). "
-                                    f"الحد الأقصى 10 MB."
+                                    f"حجم الصورة كبير جدًا ({file_size_mb:.1f} MB)"
                                 )
                             else:
                                 st.info(
                                     f"حجم الصورة: {file_size_mb:.2f} MB"
                                 )
+                                st.image(
+                                    uploaded_file,
+                                    caption="معاينة",
+                                    width=200,
+                                )
 
-                                col_a, col_b = st.columns([1, 2])
-
-                                with col_a:
-                                    st.image(
-                                        uploaded_file,
-                                        caption="معاينة",
-                                        width=200,
-                                    )
-
-                                with col_b:
-                                    st.write("**جاهز للحفظ**")
-                                    st.caption(
-                                        f"الملف: {uploaded_file.name}"
-                                    )
-
-                                    if st.button(
-                                        f"💾 حفظ {ptype}",
-                                        type="primary",
-                                        key=f"save_{active_id}_{ptype}",
-                                    ):
-                                        try:
-                                            file_bytes = (
-                                                uploaded_file.getvalue()
-                                            )
-                                            upload_photo(
-                                                active_id,
-                                                file_bytes,
-                                                uploaded_file.name,
-                                                ptype,
-                                            )
-                                            st.success(
-                                                "تم رفع الصورة بنجاح."
-                                            )
-                                            st.rerun()
-                                        except Exception as e:
-                                            st.error(
-                                                f"خطأ: {str(e)}"
-                                            )
+                                if st.button(
+                                    f"💾 حفظ {ptype}",
+                                    type="primary",
+                                    key=f"save_{active_id}_{ptype}",
+                                ):
+                                    try:
+                                        file_bytes = uploaded_file.getvalue()
+                                        upload_photo(
+                                            active_id,
+                                            file_bytes,
+                                            uploaded_file.name,
+                                            ptype,
+                                        )
+                                        st.success("تم رفع الصورة بنجاح.")
+                                        st.rerun()
+                                    except Exception as e:
+                                        st.error(f"خطأ: {str(e)}")
 
                         st.divider()
+
+                        # الطريقة 2: رابط صورة
+                        st.write("**الطريقة 2: لصق رابط صورة مباشر**")
+
+                        url_input = st.text_input(
+                            f"رابط {ptype}",
+                            placeholder="https://example.com/photo.jpg",
+                            key=f"url_{active_id}_{ptype}",
+                        )
+
+                        if url_input and st.button(
+                            f"💾 حفظ من الرابط",
+                            key=f"save_url_{active_id}_{ptype}",
+                        ):
+                            try:
+                                add_photo(active_id, ptype, url_input)
+                                st.success("تم حفظ الرابط بنجاح.")
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"خطأ: {str(e)}")
+
+                        st.divider()
+
+                        # عرض الصور المحفوظة
                         st.write(f"**صور {ptype} المحفوظة:**")
 
                         all_photos = get_patient_photos(active_id)
@@ -480,11 +464,11 @@ if url_input and st.button(
                                             st.success("تم الحذف.")
                                             st.rerun()
                                         except Exception as e:
-                                            st.error(
-                                                f"خطأ: {str(e)}"
-                                            )
+                                            st.error(f"خطأ: {str(e)}")
 
                 st.divider()
+
+                # معرض شامل
                 st.subheader("🖼️ جميع صور المريض")
 
                 all_photos = get_patient_photos(active_id)
@@ -504,10 +488,7 @@ if url_input and st.button(
 
                 st.divider()
 
-                # ------------------------------------------------
                 # سجل الزيارات
-                # ------------------------------------------------
-
                 st.subheader("📋 سجل الزيارات")
 
                 visits = get_patient_visits(active_id)
@@ -516,7 +497,6 @@ if url_input and st.button(
                     st.info("لا توجد زيارات مسجلة بعد.")
                 else:
                     for visit in visits:
-
                         title = (
                             str(visit["visit_date"])
                             + " — "
@@ -524,19 +504,14 @@ if url_input and st.button(
                         )
 
                         with st.expander(title):
-
                             st.write("**الشكوى الرئيسية:**")
                             st.write(visit["chief_complaint"] or "—")
-
                             st.write("**الفحوصات السريرية:**")
                             st.write(visit["clinical_findings"] or "—")
-
                             st.write("**التشخيص:**")
                             st.write(visit["diagnosis"] or "—")
-
                             st.write("**خطة العلاج:**")
                             st.write(visit["treatment_plan"] or "—")
-
                             st.write("**ملاحظات:**")
                             st.write(visit["notes"] or "—")
 
@@ -571,7 +546,7 @@ elif menu == "تحليل الوجه":
 
         st.info(
             "سيتم إضافة الكشف الآلي عن المعالم والتحليل الكمي "
-            "للوجه في المرحلة التالية من التطوير."
+            "للوجه في المرحلة التالية."
         )
 
 
@@ -599,9 +574,7 @@ elif menu == "تصميم الابتسامة":
             "خط الوسط السني",
         ]
 
-        selected = st.multiselect(
-            "اختر مكونات التحليل", options
-        )
+        selected = st.multiselect("اختر مكونات التحليل", options)
 
         if selected:
             st.success(str(len(selected)) + " مكونات مختارة.")
@@ -637,9 +610,7 @@ elif menu == "التشخيص السريري":
         findings = st.text_area("الفحوصات السريرية")
 
         if st.button("🔬 توليد التقييم", type="primary"):
-            st.info(
-                "الوحدة السريرية المختارة: " + diagnosis_type
-            )
+            st.info("الوحدة السريرية المختارة: " + diagnosis_type)
 
 
 # ============================================================
@@ -669,9 +640,7 @@ elif menu == "التقارير":
         )
 
         if st.button("📄 إعداد التقرير", type="primary"):
-            st.success(
-                "بدأ إعداد التقرير: " + report_type
-            )
+            st.success("بدأ إعداد التقرير: " + report_type)
 
 
 # ============================================================
@@ -686,15 +655,11 @@ elif menu == "الإعدادات":
     st.text_input("اسم العيادة", value="عيادة NAQ لطب الأسنان")
 
     st.selectbox("اللغة", ["العربية", "English"])
-    st.selectbox(
-        "الواجهة", ["سريرية", "بحثية", "مطوّر"]
-    )
+    st.selectbox("الواجهة", ["سريرية", "بحثية", "مطوّر"])
 
     st.divider()
     st.subheader("قاعدة البيانات")
     st.success("قاعدة بيانات Supabase — متصلة")
 
-    st.caption(
-        "NAQclinixAI — طب أسنان ذكي، انسجام مثالي"
-    )
-    st.caption("الإصدار 2.2")
+    st.caption("NAQclinixAI — طب أسنان ذكي، انسجام مثالي")
+    st.caption("الإصدار 2.3")
