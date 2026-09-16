@@ -4,7 +4,7 @@ from datetime import datetime, date
 # ============================================================
 # NAQclinixAI - نظام إدارة عيادة الأسنان الذكي
 # Intelligent Dentistry, Perfect Harmony
-# Version 2.1 - مع صور المرضى
+# Version 2.2 - مع نظام صور متكامل
 # ============================================================
 
 st.set_page_config(
@@ -44,6 +44,7 @@ from database import (
     get_patient_visits,
     upload_photo,
     get_patient_photos,
+    delete_photo,
 )
 
 initialize_database()
@@ -95,7 +96,7 @@ if st.sidebar.button("🚪 تسجيل الخروج"):
 
 st.sidebar.divider()
 st.sidebar.caption("DentoFacial-HarmonizeAI")
-st.sidebar.caption("الإصدار 2.1")
+st.sidebar.caption("الإصدار 2.2")
 
 
 # ============================================================
@@ -338,79 +339,143 @@ elif menu == "المرضى":
                 st.divider()
 
                 # ------------------------------------------------
-                # صور المريض
+                # صور المريض - نظام متكامل بالتبويبات
                 # ------------------------------------------------
 
                 st.subheader("📸 صور المريض")
-
-                photo_type = st.selectbox(
-                    "نوع الصورة",
-                    [
-                        "صورة أمامية",
-                        "صورة جانبية",
-                        "صورة الابتسامة",
-                        "أشعة",
-                        "أخرى",
-                    ],
-                    key="photo_type_" + active_id,
+                st.caption(
+                    "ارفع صور المريض مصنّفة حسب النوع — الحد الأقصى 10 MB للصورة"
                 )
 
-                uploaded_file = st.file_uploader(
-    f"ارفع {ptype}",
-    type=["jpg", "jpeg", "png"],
-    key=f"uploader_{active_id}_{ptype}",
-)
+                photo_tabs = st.tabs(
+                    [
+                        "😊 أمامية",
+                        "👤 جانبية",
+                        "😁 ابتسامة",
+                        "🦷 أشعة",
+                    ]
+                )
 
-if uploaded_file is not None:
-    file_size_mb = (
-        uploaded_file.size / (1024 * 1024)
-    )
+                photo_types = [
+                    "صورة أمامية",
+                    "صورة جانبية",
+                    "صورة الابتسامة",
+                    "أشعة",
+                ]
 
-    if file_size_mb > 10:
-        st.error(
-            f"حجم الصورة كبير جدًا "
-            f"({file_size_mb:.1f} MB). "
-            f"الحد الأقصى 10 MB."
-        )
-        st.stop()
+                for tab, ptype in zip(photo_tabs, photo_types):
+                    with tab:
 
-    st.info(
-        f"حجم الصورة: {file_size_mb:.2f} MB"
-    )
+                        uploaded_file = st.file_uploader(
+                            f"ارفع {ptype}",
+                            type=["jpg", "jpeg", "png"],
+                            key=f"uploader_{active_id}_{ptype}",
+                        )
 
-    col_a, col_b = st.columns([1, 2])
-                    st.image(
-                        uploaded_file,
-                        caption="معاينة الصورة",
-                        width=300,
-                    )
-
-                    if st.button(
-                        "💾 حفظ الصورة",
-                        type="primary",
-                        key="save_photo_" + active_id,
-                    ):
-                        try:
-                            file_bytes = uploaded_file.getvalue()
-                            upload_photo(
-                                active_id,
-                                file_bytes,
-                                uploaded_file.name,
-                                photo_type,
+                        if uploaded_file is not None:
+                            file_size_mb = (
+                                uploaded_file.size / (1024 * 1024)
                             )
-                            st.success("تم رفع الصورة بنجاح.")
-                            st.rerun()
-                        except Exception as e:
-                            st.error(f"خطأ في رفع الصورة: {str(e)}")
 
-                photos = get_patient_photos(active_id)
+                            if file_size_mb > 10:
+                                st.error(
+                                    f"حجم الصورة كبير جدًا "
+                                    f"({file_size_mb:.1f} MB). "
+                                    f"الحد الأقصى 10 MB."
+                                )
+                            else:
+                                st.info(
+                                    f"حجم الصورة: {file_size_mb:.2f} MB"
+                                )
 
-                if photos:
-                    st.write("### 🖼️ الصور المحفوظة")
+                                col_a, col_b = st.columns([1, 2])
 
-                    cols = st.columns(3)
-                    for i, photo in enumerate(photos):
-                        with cols[i % 3]:
+                                with col_a:
+                                    st.image(
+                                        uploaded_file,
+                                        caption="معاينة",
+                                        width=200,
+                                    )
+
+                                with col_b:
+                                    st.write("**جاهز للحفظ**")
+                                    st.caption(
+                                        f"الملف: {uploaded_file.name}"
+                                    )
+
+                                    if st.button(
+                                        f"💾 حفظ {ptype}",
+                                        type="primary",
+                                        key=f"save_{active_id}_{ptype}",
+                                    ):
+                                        try:
+                                            file_bytes = (
+                                                uploaded_file.getvalue()
+                                            )
+                                            upload_photo(
+                                                active_id,
+                                                file_bytes,
+                                                uploaded_file.name,
+                                                ptype,
+                                            )
+                                            st.success(
+                                                "تم رفع الصورة بنجاح."
+                                            )
+                                            st.rerun()
+                                        except Exception as e:
+                                            st.error(
+                                                f"خطأ: {str(e)}"
+                                            )
+
+                        st.divider()
+                        st.write(f"**صور {ptype} المحفوظة:**")
+
+                        all_photos = get_patient_photos(active_id)
+                        filtered = [
+                            p for p in all_photos
+                            if p["photo_type"] == ptype
+                        ]
+
+                        if not filtered:
+                            st.info("لا توجد صور بعد.")
+                        else:
+                            cols = st.columns(3)
+                            for i, photo in enumerate(filtered):
+                                with cols[i % 3]:
+                                    st.image(
+                                        photo["photo_url"],
+                                        caption=photo["photo_type"],
+                                        use_container_width=True,
+                                    )
+
+                                    if st.button(
+                                        "🗑️ حذف",
+                                        key=f"del_{photo['id']}",
+                                    ):
+                                        try:
+                                            delete_photo(
+                                                photo["id"],
+                                                photo["photo_url"],
+                                            )
+                                            st.success("تم الحذف.")
+                                            st.rerun()
+                                        except Exception as e:
+                                            st.error(
+                                                f"خطأ: {str(e)}"
+                                            )
+
+                st.divider()
+                st.subheader("🖼️ جميع صور المريض")
+
+                all_photos = get_patient_photos(active_id)
+
+                if not all_photos:
+                    st.info("لا توجد صور محفوظة بعد.")
+                else:
+                    st.caption(f"المجموع: {len(all_photos)} صورة")
+                    cols = st.columns(4)
+                    for i, photo in enumerate(all_photos):
+                        with cols[i % 4]:
                             st.image(
                                 photo["photo_url"],
                                 caption=photo["photo_type"],
@@ -612,4 +677,4 @@ elif menu == "الإعدادات":
     st.caption(
         "NAQclinixAI — طب أسنان ذكي، انسجام مثالي"
     )
-    st.caption("الإصدار 2.1")
+    st.caption("الإصدار 2.2")
