@@ -1,91 +1,102 @@
-import sqlite3
-from pathlib import Path
-
-DB_PATH = Path("naqclinixai.db")
+import streamlit as st
+from supabase import create_client, Client
 
 
-def get_connection():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+@st.cache_resource
+def get_supabase() -> Client:
+    url = st.secrets["supabase"]["url"]
+    key = st.secrets["supabase"]["key"]
+    return create_client(url, key)
+
+
+def _user_email():
+    try:
+        return st.user.email
+    except Exception:
+        return "unknown"
 
 
 def initialize_database():
-    with get_connection() as conn:
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS patients (
-                patient_id TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                age INTEGER,
-                sex TEXT,
-                phone TEXT,
-                clinical_notes TEXT,
-                created_at TEXT
-            )
-        """)
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS visits (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                patient_id TEXT NOT NULL,
-                visit_date TEXT,
-                visit_type TEXT,
-                chief_complaint TEXT,
-                clinical_findings TEXT,
-                diagnosis TEXT,
-                treatment_plan TEXT,
-                notes TEXT,
-                created_at TEXT
-            )
-        """)
-        conn.commit()
+    pass
 
 
 def add_patient(patient_id, name, age, sex, phone, clinical_notes, created_at):
-    with get_connection() as conn:
-        conn.execute(
-            """INSERT INTO patients
-               (patient_id, name, age, sex, phone, clinical_notes, created_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?)""",
-            (patient_id, name, age, sex, phone, clinical_notes, created_at),
-        )
-        conn.commit()
+    sb = get_supabase()
+    sb.table("patients").insert({
+        "patient_id": patient_id,
+        "name": name,
+        "age": age,
+        "sex": sex,
+        "phone": phone,
+        "clinical_notes": clinical_notes,
+        "created_at": created_at,
+        "user_email": _user_email(),
+    }).execute()
 
 
 def get_patients():
-    with get_connection() as conn:
-        rows = conn.execute(
-            "SELECT * FROM patients ORDER BY created_at DESC"
-        ).fetchall()
-        return [dict(r) for r in rows]
+    sb = get_supabase()
+    res = sb.table("patients").select("*").eq(
+        "user_email", _user_email()
+    ).order("created_at", desc=True).execute()
+    return res.data or []
 
 
 def patient_exists(patient_id):
-    with get_connection() as conn:
-        row = conn.execute(
-            "SELECT 1 FROM patients WHERE patient_id = ?",
-            (patient_id,),
-        ).fetchone()
-        return row is not None
+    sb = get_supabase()
+    res = sb.table("patients").select("patient_id").eq(
+        "patient_id", patient_id
+    ).eq("user_email", _user_email()).execute()
+    return len(res.data) > 0
 
 
 def add_visit(patient_id, visit_date, visit_type, chief_complaint,
               clinical_findings, diagnosis, treatment_plan, notes, created_at):
-    with get_connection() as conn:
-        conn.execute(
-            """INSERT INTO visits
-               (patient_id, visit_date, visit_type, chief_complaint,
-                clinical_findings, diagnosis, treatment_plan, notes, created_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (patient_id, visit_date, visit_type, chief_complaint,
-             clinical_findings, diagnosis, treatment_plan, notes, created_at),
-        )
-        conn.commit()
+    sb = get_supabase()
+    sb.table("visits").insert({
+        "patient_id": patient_id,
+        "visit_date": visit_date,
+        "visit_type": visit_type,
+        "chief_complaint": chief_complaint,
+        "clinical_findings": clinical_findings,
+        "diagnosis": diagnosis,
+        "treatment_plan": treatment_plan,
+        "notes": notes,
+        "created_at": created_at,
+    }).execute()
 
 
 def get_patient_visits(patient_id):
-    with get_connection() as conn:
-        rows = conn.execute(
-            "SELECT * FROM visits WHERE patient_id = ? ORDER BY visit_date DESC",
-            (patient_id,),
-        ).fetchall()
-        return [dict(r) for r in rows]
+    sb = get_supabase()
+    res = sb.table("visits").select("*").eq(
+        "patient_id", patient_id
+    ).order("visit_date", desc=True).execute()
+    return res.data or []
+
+
+def add_photo(patient_id, photo_type, photo_url):
+    sb = get_supabase()
+    sb.table("photos").insert({
+        "patient_id": patient_id,
+        "photo_type": photo_type,
+        "photo_url": photo_url,
+    }).execute()
+
+
+def get_patient_photos(patient_id):
+    sb = get_supabase()
+    res = sb.table("photos").select("*").eq(
+        "patient_id", patient_id
+    ).order("uploaded_at", desc=True).execute()
+    return res.data or []
+
+
+def upload_photo(patient_id, file_bytes, file_name, photo_type):
+    sb = get_supabase()
+    path = f"{patient_id}/{photo_type}_{file_name}"
+    sb.storage.from_("patient-photos").upload(
+        path, file_bytes, {"content-type": "image/jpeg"}
+    )
+    url = sb.storage.from_("patient-photos").get_public_url(path)
+    add_photo(patient_id, photo_type, url)
+    return url
