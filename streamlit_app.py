@@ -3,7 +3,7 @@ from datetime import datetime, date
 
 # ============================================================
 # NAQclinixAI - نظام إدارة عيادة الأسنان الذكي
-# Version 2.4 - مع كشف تلقائي لنوع الصورة
+# Version 2.5 - مع كشف تلقائي وإصلاح روابط الصور
 # ============================================================
 
 st.set_page_config(
@@ -46,10 +46,9 @@ from database import (
     delete_photo,
     add_photo,
     detect_photo_type,
-)
-
     fix_photo_urls,
 )
+
 initialize_database()
 
 # ============================================================
@@ -99,7 +98,7 @@ if st.sidebar.button("🚪 تسجيل الخروج"):
 
 st.sidebar.divider()
 st.sidebar.caption("DentoFacial-HarmonizeAI")
-st.sidebar.caption("الإصدار 2.4")
+st.sidebar.caption("الإصدار 2.5")
 
 
 # ============================================================
@@ -416,14 +415,23 @@ elif menu == "المرضى":
                 # ------------------------------------------------
                 # معرض الصور
                 # ------------------------------------------------
-if st.button("🔧 إصلاح روابط الصور", key=f"fix_{active_id}"):
-    try:
-        fix_photo_urls(active_id)
-        st.success("تم إصلاح الروابط.")
-        st.rerun()
-    except Exception as e:
-        st.error(f"خطأ: {str(e)}")
-                st.subheader("🖼️ صور المريض")
+
+                col_a, col_b = st.columns([3, 1])
+
+                with col_a:
+                    st.subheader("🖼️ صور المريض")
+
+                with col_b:
+                    if st.button(
+                        "🔧 إصلاح الروابط",
+                        key=f"fix_{active_id}",
+                    ):
+                        try:
+                            fix_photo_urls(active_id)
+                            st.success("تم الإصلاح.")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"خطأ: {str(e)}")
 
                 all_photos = get_patient_photos(active_id)
 
@@ -647,4 +655,4 @@ elif menu == "الإعدادات":
     st.success("قاعدة بيانات Supabase — متصلة")
 
     st.caption("NAQclinixAI — طب أسنان ذكي، انسجام مثالي")
-    st.caption("الإصدار 2.4")
+    st.caption("الإصدار 2.5")
