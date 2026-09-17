@@ -94,6 +94,7 @@ def get_patient_photos(patient_id):
 
 
 def upload_photo(patient_id, file_bytes, file_name, photo_type):
+def upload_photo(patient_id, file_bytes, file_name, photo_type):
     sb = get_supabase()
 
     type_map = {
@@ -112,13 +113,23 @@ def upload_photo(patient_id, file_bytes, file_name, photo_type):
 
     path = f"{patient_id}/{type_key}_{timestamp}_{safe_name}"
 
+    # رفع الصورة
     sb.storage.from_("patient-photos").upload(
         path, file_bytes, {"content-type": "image/jpeg"}
     )
-    url = sb.storage.from_("patient-photos").get_public_url(path)
+
+    # الحصول على رابط عام
+    try:
+        url = sb.storage.from_("patient-photos").get_public_url(path)
+    except Exception:
+        # إذا فشل الرابط العام، استخدم رابط موقّع صالح لسنة
+        result = sb.storage.from_("patient-photos").create_signed_url(
+            path, 31536000
+        )
+        url = result.get("signedURL") or result.get("signed_url") or result.get("signedUrl")
+
     add_photo(patient_id, photo_type, url)
     return url
-
 
 def delete_photo(photo_id, photo_url):
     sb = get_supabase()
