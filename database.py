@@ -96,7 +96,6 @@ def get_patient_photos(patient_id):
 def upload_photo(patient_id, file_bytes, file_name, photo_type):
     sb = get_supabase()
 
-    # تحويل النوع العربي إلى مفتاح آمن
     type_map = {
         "صورة أمامية": "front",
         "صورة جانبية": "side",
@@ -106,13 +105,11 @@ def upload_photo(patient_id, file_bytes, file_name, photo_type):
     }
     type_key = type_map.get(photo_type, "other")
 
-    # تنظيف اسم الملف من المسافات والأحرف العربية
     import re
     from datetime import datetime
     safe_name = re.sub(r"[^a-zA-Z0-9._-]", "_", file_name)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    # مسار آمن بالكامل بالإنجليزية
     path = f"{patient_id}/{type_key}_{timestamp}_{safe_name}"
 
     sb.storage.from_("patient-photos").upload(
@@ -121,11 +118,10 @@ def upload_photo(patient_id, file_bytes, file_name, photo_type):
     url = sb.storage.from_("patient-photos").get_public_url(path)
     add_photo(patient_id, photo_type, url)
     return url
-    
+
 
 def delete_photo(photo_id, photo_url):
     sb = get_supabase()
-    # استخراج مسار الصورة من الرابط
     if "/patient-photos/" in photo_url:
         path = photo_url.split("/patient-photos/")[-1]
         try:
@@ -133,8 +129,6 @@ def delete_photo(photo_id, photo_url):
         except Exception:
             pass
     sb.table("photos").delete().eq("id", photo_id).execute()
-
-
 
 
 def detect_photo_type(uploaded_file):
@@ -151,7 +145,6 @@ def detect_photo_type(uploaded_file):
     try:
         filename = uploaded_file.name.lower()
 
-        # 1. اسم الملف
         if any(k in filename for k in [
             "xray", "x-ray", "x_ray", "radiograph",
             "radiology", "أشعة", "اشعه",
@@ -173,11 +166,9 @@ def detect_photo_type(uploaded_file):
         ]):
             return "صورة أمامية"
 
-        # 2. تحليل الصورة
         img = Image.open(io.BytesIO(uploaded_file.getvalue()))
         img_rgb = img.convert("RGB")
 
-        # هل الصورة رمادية؟ (مؤشر أشعة)
         sample = img_rgb.resize((50, 50))
         pixels = list(sample.getdata())
 
@@ -189,14 +180,12 @@ def detect_photo_type(uploaded_file):
         if is_grayscale:
             return "أشعة"
 
-        # 3. نسبة الأبعاد
         width, height = img.size
         ratio = height / width
 
         if ratio > 1.4:
             return "صورة جانبية"
 
-        # 4. الافتراضي
         return "صورة أمامية"
 
     except Exception:
