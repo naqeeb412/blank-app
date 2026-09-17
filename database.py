@@ -133,3 +133,71 @@ def delete_photo(photo_id, photo_url):
         except Exception:
             pass
     sb.table("photos").delete().eq("id", photo_id).execute()
+
+
+
+
+def detect_photo_type(uploaded_file):
+    """
+    كشف نوع الصورة تلقائيًا:
+    - أشعة: صورة رمادية (أبيض وأسود)
+    - ابتسامة: اسم الملف يحتوي smile
+    - جانبية: اسم الملف يحتوي side/profile
+    - أمامية: الافتراضي
+    """
+    import io
+    from PIL import Image
+
+    try:
+        filename = uploaded_file.name.lower()
+
+        # 1. اسم الملف
+        if any(k in filename for k in [
+            "xray", "x-ray", "x_ray", "radiograph",
+            "radiology", "أشعة", "اشعه",
+        ]):
+            return "أشعة"
+
+        if any(k in filename for k in [
+            "smile", "ابتسام", "سن",
+        ]):
+            return "صورة الابتسامة"
+
+        if any(k in filename for k in [
+            "side", "profile", "جانب", "جانبي",
+        ]):
+            return "صورة جانبية"
+
+        if any(k in filename for k in [
+            "front", "frontal", "امام", "أمام",
+        ]):
+            return "صورة أمامية"
+
+        # 2. تحليل الصورة
+        img = Image.open(io.BytesIO(uploaded_file.getvalue()))
+        img_rgb = img.convert("RGB")
+
+        # هل الصورة رمادية؟ (مؤشر أشعة)
+        sample = img_rgb.resize((50, 50))
+        pixels = list(sample.getdata())
+
+        is_grayscale = all(
+            abs(p[0] - p[1]) < 15 and abs(p[1] - p[2]) < 15
+            for p in pixels
+        )
+
+        if is_grayscale:
+            return "أشعة"
+
+        # 3. نسبة الأبعاد
+        width, height = img.size
+        ratio = height / width
+
+        if ratio > 1.4:
+            return "صورة جانبية"
+
+        # 4. الافتراضي
+        return "صورة أمامية"
+
+    except Exception:
+        return "صورة أمامية"
