@@ -3,7 +3,7 @@ from datetime import datetime, date
 
 # ============================================================
 # NAQclinixAI - نظام إدارة عيادة الأسنان الذكي
-# Version 2.3 - مع رفع الصور وحفظها عبر رابط
+# Version 2.4 - مع كشف تلقائي لنوع الصورة
 # ============================================================
 
 st.set_page_config(
@@ -45,6 +45,7 @@ from database import (
     get_patient_photos,
     delete_photo,
     add_photo,
+    detect_photo_type,
 )
 
 initialize_database()
@@ -96,7 +97,7 @@ if st.sidebar.button("🚪 تسجيل الخروج"):
 
 st.sidebar.divider()
 st.sidebar.caption("DentoFacial-HarmonizeAI")
-st.sidebar.caption("الإصدار 2.3")
+st.sidebar.caption("الإصدار 2.4")
 
 
 # ============================================================
@@ -336,159 +337,135 @@ elif menu == "المرضى":
                 st.divider()
 
                 # ------------------------------------------------
-                # صور المريض
+                # صور المريض - كشف تلقائي
                 # ------------------------------------------------
 
                 st.subheader("📸 صور المريض")
                 st.caption(
-                    "ارفع صورة من الجهاز أو الصق رابط صورة مباشر"
+                    "ارفع الصورة وسيكتشف التطبيق نوعها تلقائيًا"
                 )
 
-                photo_tabs = st.tabs(
-                    [
-                        "😊 أمامية",
-                        "👤 جانبية",
-                        "😁 ابتسامة",
-                        "🦷 أشعة",
-                    ]
+                uploaded_file = st.file_uploader(
+                    "اختر صورة (JPG, PNG)",
+                    type=["jpg", "jpeg", "png"],
+                    key="uploader_" + active_id,
                 )
 
-                photo_types = [
-                    "صورة أمامية",
-                    "صورة جانبية",
-                    "صورة الابتسامة",
-                    "أشعة",
-                ]
+                if uploaded_file is not None:
+                    file_size_mb = uploaded_file.size / (1024 * 1024)
 
-                for tab, ptype in zip(photo_tabs, photo_types):
-                    with tab:
-
-                        # الطريقة 1: رفع صورة
-                        st.write("**الطريقة 1: رفع صورة من الجهاز**")
-
-                        uploaded_file = st.file_uploader(
-                            f"ارفع {ptype}",
-                            type=["jpg", "jpeg", "png"],
-                            key=f"uploader_{active_id}_{ptype}",
+                    if file_size_mb > 10:
+                        st.error(
+                            f"حجم الصورة كبير جدًا ({file_size_mb:.1f} MB)"
                         )
+                    else:
+                        st.info(f"حجم الصورة: {file_size_mb:.2f} MB")
 
-                        if uploaded_file is not None:
-                            file_size_mb = uploaded_file.size / (1024 * 1024)
+                        detected_type = detect_photo_type(uploaded_file)
 
-                            if file_size_mb > 10:
-                                st.error(
-                                    f"حجم الصورة كبير جدًا ({file_size_mb:.1f} MB)"
-                                )
-                            else:
-                                st.info(
-                                    f"حجم الصورة: {file_size_mb:.2f} MB"
-                                )
-                                st.image(
-                                    uploaded_file,
-                                    caption="معاينة",
-                                    width=200,
-                                )
+                        col_img, col_info = st.columns([1, 2])
 
-                                if st.button(
-                                    f"💾 حفظ {ptype}",
-                                    type="primary",
-                                    key=f"save_{active_id}_{ptype}",
-                                ):
-                                    try:
-                                        file_bytes = uploaded_file.getvalue()
-                                        upload_photo(
-                                            active_id,
-                                            file_bytes,
-                                            uploaded_file.name,
-                                            ptype,
-                                        )
-                                        st.success("تم رفع الصورة بنجاح.")
-                                        st.rerun()
-                                    except Exception as e:
-                                        st.error(f"خطأ: {str(e)}")
+                        with col_img:
+                            st.image(
+                                uploaded_file,
+                                caption="معاينة",
+                                width=200,
+                            )
 
-                        st.divider()
+                        with col_info:
+                            st.success(
+                                f"🔍 النوع المكتشف: **{detected_type}**"
+                            )
 
-                        # الطريقة 2: رابط صورة
-                        st.write("**الطريقة 2: لصق رابط صورة مباشر**")
+                            all_types = [
+                                "صورة أمامية",
+                                "صورة جانبية",
+                                "صورة الابتسامة",
+                                "أشعة",
+                            ]
 
-                        url_input = st.text_input(
-                            f"رابط {ptype}",
-                            placeholder="https://example.com/photo.jpg",
-                            key=f"url_{active_id}_{ptype}",
-                        )
+                            confirmed_type = st.selectbox(
+                                "تأكيد أو تغيير النوع:",
+                                all_types,
+                                index=all_types.index(detected_type),
+                                key="confirm_" + active_id,
+                            )
 
-                        if url_input and st.button(
-                            f"💾 حفظ من الرابط",
-                            key=f"save_url_{active_id}_{ptype}",
-                        ):
-                            try:
-                                add_photo(active_id, ptype, url_input)
-                                st.success("تم حفظ الرابط بنجاح.")
-                                st.rerun()
-                            except Exception as e:
-                                st.error(f"خطأ: {str(e)}")
-
-                        st.divider()
-
-                        # عرض الصور المحفوظة
-                        st.write(f"**صور {ptype} المحفوظة:**")
-
-                        all_photos = get_patient_photos(active_id)
-                        filtered = [
-                            p for p in all_photos
-                            if p["photo_type"] == ptype
-                        ]
-
-                        if not filtered:
-                            st.info("لا توجد صور بعد.")
-                        else:
-                            cols = st.columns(3)
-                            for i, photo in enumerate(filtered):
-                                with cols[i % 3]:
-                                    st.image(
-                                        photo["photo_url"],
-                                        caption=photo["photo_type"],
-                                        use_container_width=True,
+                            if st.button(
+                                "💾 حفظ الصورة",
+                                type="primary",
+                                key="save_" + active_id,
+                            ):
+                                try:
+                                    file_bytes = uploaded_file.getvalue()
+                                    upload_photo(
+                                        active_id,
+                                        file_bytes,
+                                        uploaded_file.name,
+                                        confirmed_type,
                                     )
-
-                                    if st.button(
-                                        "🗑️ حذف",
-                                        key=f"del_{photo['id']}",
-                                    ):
-                                        try:
-                                            delete_photo(
-                                                photo["id"],
-                                                photo["photo_url"],
-                                            )
-                                            st.success("تم الحذف.")
-                                            st.rerun()
-                                        except Exception as e:
-                                            st.error(f"خطأ: {str(e)}")
+                                    st.success("تم رفع الصورة بنجاح.")
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"خطأ: {str(e)}")
 
                 st.divider()
 
-                # معرض شامل
-                st.subheader("🖼️ جميع صور المريض")
+                # ------------------------------------------------
+                # معرض الصور
+                # ------------------------------------------------
+
+                st.subheader("🖼️ صور المريض")
 
                 all_photos = get_patient_photos(active_id)
 
                 if not all_photos:
                     st.info("لا توجد صور محفوظة بعد.")
                 else:
-                    st.caption(f"المجموع: {len(all_photos)} صورة")
-                    cols = st.columns(4)
-                    for i, photo in enumerate(all_photos):
-                        with cols[i % 4]:
-                            st.image(
-                                photo["photo_url"],
-                                caption=photo["photo_type"],
-                                use_container_width=True,
-                            )
+                    grouped = {}
+                    for photo in all_photos:
+                        ptype = photo["photo_type"]
+                        grouped.setdefault(ptype, []).append(photo)
+
+                    type_icons = {
+                        "صورة أمامية": "😊",
+                        "صورة جانبية": "👤",
+                        "صورة الابتسامة": "😁",
+                        "أشعة": "🦷",
+                    }
+
+                    for ptype, photos in grouped.items():
+                        icon = type_icons.get(ptype, "📷")
+                        st.write(f"### {icon} {ptype} ({len(photos)})")
+
+                        cols = st.columns(3)
+                        for i, photo in enumerate(photos):
+                            with cols[i % 3]:
+                                st.image(
+                                    photo["photo_url"],
+                                    use_container_width=True,
+                                )
+
+                                if st.button(
+                                    "🗑️ حذف",
+                                    key=f"del_{photo['id']}",
+                                ):
+                                    try:
+                                        delete_photo(
+                                            photo["id"],
+                                            photo["photo_url"],
+                                        )
+                                        st.success("تم الحذف.")
+                                        st.rerun()
+                                    except Exception as e:
+                                        st.error(f"خطأ: {str(e)}")
 
                 st.divider()
 
+                # ------------------------------------------------
                 # سجل الزيارات
+                # ------------------------------------------------
+
                 st.subheader("📋 سجل الزيارات")
 
                 visits = get_patient_visits(active_id)
@@ -662,4 +639,4 @@ elif menu == "الإعدادات":
     st.success("قاعدة بيانات Supabase — متصلة")
 
     st.caption("NAQclinixAI — طب أسنان ذكي، انسجام مثالي")
-    st.caption("الإصدار 2.3")
+    st.caption("الإصدار 2.4")
