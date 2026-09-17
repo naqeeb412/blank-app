@@ -48,6 +48,8 @@ from database import (
     detect_photo_type,
 )
 
+    fix_photo_urls,
+)
 initialize_database()
 
 # ============================================================
@@ -414,7 +416,13 @@ elif menu == "المرضى":
                 # ------------------------------------------------
                 # معرض الصور
                 # ------------------------------------------------
-
+if st.button("🔧 إصلاح روابط الصور", key=f"fix_{active_id}"):
+    try:
+        fix_photo_urls(active_id)
+        st.success("تم إصلاح الروابط.")
+        st.rerun()
+    except Exception as e:
+        st.error(f"خطأ: {str(e)}")
                 st.subheader("🖼️ صور المريض")
 
                 all_photos = get_patient_photos(active_id)
