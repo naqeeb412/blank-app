@@ -190,3 +190,30 @@ def detect_photo_type(uploaded_file):
 
     except Exception:
         return "صورة أمامية"
+
+
+def fix_photo_urls(patient_id):
+    """يعيد توليد روابط الصور بشكل صحيح"""
+    sb = get_supabase()
+    photos = get_patient_photos(patient_id)
+
+    for photo in photos:
+        url = photo["photo_url"]
+        if "/patient-photos/" in url:
+            path = url.split("/patient-photos/")[-1]
+            # إزالة query params إن وجدت
+            if "?" in path:
+                path = path.split("?")[0]
+
+            try:
+                new_url = sb.storage.from_("patient-photos").get_public_url(path)
+            except Exception:
+                result = sb.storage.from_("patient-photos").create_signed_url(
+                    path, 31536000
+                )
+                new_url = result.get("signedURL") or result.get("signed_url")
+
+            if new_url and new_url != url:
+                sb.table("photos").update(
+                    {"photo_url": new_url}
+                ).eq("id", photo["id"]).execute()
