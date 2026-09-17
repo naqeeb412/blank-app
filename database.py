@@ -93,7 +93,25 @@ def get_patient_photos(patient_id):
     return res.data or []
 
 
-def upload_photo(patient_id, file_bytes, file_name, photo_type):
+def _get_photo_url(path):
+    """الحصول على رابط عام للصورة"""
+    sb = get_supabase()
+    try:
+        return sb.storage.from_("patient-photos").get_public_url(path)
+    except Exception:
+        try:
+            result = sb.storage.from_("patient-photos").create_signed_url(
+                path, 31536000
+            )
+            return (
+                result.get("signedURL")
+                or result.get("signed_url")
+                or result.get("signedUrl")
+            )
+        except Exception:
+            return None
+
+
 def upload_photo(patient_id, file_bytes, file_name, photo_type):
     sb = get_supabase()
 
@@ -113,33 +131,46 @@ def upload_photo(patient_id, file_bytes, file_name, photo_type):
 
     path = f"{patient_id}/{type_key}_{timestamp}_{safe_name}"
 
-    # رفع الصورة
     sb.storage.from_("patient-photos").upload(
         path, file_bytes, {"content-type": "image/jpeg"}
     )
 
-    # الحصول على رابط عام
-    try:
-        url = sb.storage.from_("patient-photos").get_public_url(path)
-    except Exception:
-        # إذا فشل الرابط العام، استخدم رابط موقّع صالح لسنة
-        result = sb.storage.from_("patient-photos").create_signed_url(
-            path, 31536000
-        )
-        url = result.get("signedURL") or result.get("signed_url") or result.get("signedUrl")
-
+    url = _get_photo_url(path)
     add_photo(patient_id, photo_type, url)
     return url
+
 
 def delete_photo(photo_id, photo_url):
     sb = get_supabase()
     if "/patient-photos/" in photo_url:
         path = photo_url.split("/patient-photos/")[-1]
+        if "?" in path:
+            path = path.split("?")[0]
         try:
             sb.storage.from_("patient-photos").remove([path])
         except Exception:
             pass
     sb.table("photos").delete().eq("id", photo_id).execute()
+
+
+def fix_photo_urls(patient_id):
+    """إعادة توليد روابط الصور بشكل صحيح"""
+    sb = get_supabase()
+    photos = get_patient_photos(patient_id)
+
+    for photo in photos:
+        url = photo["photo_url"]
+        if "/patient-photos/" in url:
+            path = url.split("/patient-photos/")[-1]
+            if "?" in path:
+                path = path.split("?")[0]
+
+            new_url = _get_photo_url(path)
+
+            if new_url and new_url != url:
+                sb.table("photos").update(
+                    {"photo_url": new_url}
+                ).eq("id", photo["id"]).execute()
 
 
 def detect_photo_type(uploaded_file):
@@ -201,30 +232,3 @@ def detect_photo_type(uploaded_file):
 
     except Exception:
         return "صورة أمامية"
-
-
-def fix_photo_urls(patient_id):
-    """يعيد توليد روابط الصور بشكل صحيح"""
-    sb = get_supabase()
-    photos = get_patient_photos(patient_id)
-
-    for photo in photos:
-        url = photo["photo_url"]
-        if "/patient-photos/" in url:
-            path = url.split("/patient-photos/")[-1]
-            # إزالة query params إن وجدت
-            if "?" in path:
-                path = path.split("?")[0]
-
-            try:
-                new_url = sb.storage.from_("patient-photos").get_public_url(path)
-            except Exception:
-                result = sb.storage.from_("patient-photos").create_signed_url(
-                    path, 31536000
-                )
-                new_url = result.get("signedURL") or result.get("signed_url")
-
-            if new_url and new_url != url:
-                sb.table("photos").update(
-                    {"photo_url": new_url}
-                ).eq("id", photo["id"]).execute()
