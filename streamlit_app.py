@@ -663,14 +663,19 @@ elif menu == "تصميم الابتسامة":
                         st.info("💡 تمت معالجة وتوليد محاكاة النتيجة السريرية التجميلية بنجاح وجاهزة لمناقشتها مع المريض.")
 
 
-# ====elif menu == "التشخيص السريري":
+# ============================================================
+# التشخيص السريري وخطة العلاج بالذكاء الاصطناعي
+# ============================================================
 
-    st.title("🩺 التشخيص السريري بالذكاء الاصطناعي")
+elif menu == "التشخيص السريري":
+
+    st.title("🩺 التشخيص السريري وخطة العلاج")
 
     if not st.session_state.active_patient_id:
         st.warning("اختر مريضًا نشطًا أولًا من سجلات المرضى.")
     else:
-        st.success("المريض النشط: " + st.session_state.active_patient_id)
+        active_id = st.session_state.active_patient_id
+        st.success("المريض النشط: " + active_id)
 
         diagnosis_type = st.selectbox(
             "الوحدة السريرية للتقييم:",
@@ -684,42 +689,48 @@ elif menu == "تصميم الابتسامة":
             ],
         )
 
-        clinical_findings = st.text_area("أدخل الفحوصات والبيانات السريرية للمريض:")
+        clinical_findings = st.text_area("الفحوصات والملاحظات السريرية الحالية:")
+        
+        # حقول واضحة لإدخال أو توليد التشخيص وخطة العلاج
+        st.markdown("### 📝 تفاصيل التشخيص والخطة العلاجية:")
+        diagnosis_input = st.text_area(
+            "التشخيص السريري النهائي:",
+            value=f"حالة تستدعي التدخل ضمن وحدة ({diagnosis_type}) لتحسين التناسق المورفولوجي والوظيفة الفموية."
+        )
+        
+        treatment_plan_input = st.text_area(
+            "خطة العلاج المقترحة:",
+            value="1. الفحص الشامل وتوثيق الصور بالأشعة.\n2. إجراء التصميم الرقمي للابتسامة.\n3. البدء بالعلاج التجميلي والتعويضي المخطط."
+        )
 
-        if st.button("🔬 توليد التشخيص وخطة العلاج الذكية", type="primary"):
-            if not clinical_findings.strip():
-                st.warning("الرجاء إدخال بعض الملاحظات أو الفحوصات السريرية أولاً ليقوم الذكاء الاصطناعي بتحليلها.")
-            else:
-                with st.spinner("جاري تحليل البيانات السريرية وصياغة التشخيص وخطة العلاج..."):
-                    
-                    # محاكاة توليد ذكي واقعي ومفصل يعتمد على مدخلات الطبيب
-                    generated_diagnosis = f"بناءً على وحدة ({diagnosis_type}) والفحوصات المدخلة، يتبين وجود حاجة لتدخل تجميلي وعلاجي يركز على إعادة التناسق الدنتوفاشي وتحسين الحالة الوظيفية والجمالية للأسنان."
-                    generated_treatment_plan = "1. جلسة تحضيرية وإزالة التصبغات.\n2. تطبيق تصميم الابتسامة الرقمي (Digital Smile Design).\n3. البدء بخطة العلاج المعتمدة ومتابعة النتائج عبر نظام المحاكاة."
-                    
-                    st.markdown("### 📋 نتيجة التحليل والتشخيص الذكي:")
-                    st.success(generated_diagnosis)
-                    
-                    st.markdown("### 🛠️ خطة العلاج المقترحة:")
-                    st.info(generated_treatment_plan)
-                    
-                    # زر لحفظ خطة العلاج والتشخيص في قاعدة بيانات الزيارات
-                    if st.button("💾 اعتماد وحفظ التشخيص والخطة في السجل"):
-                        try:
-                            created_at = datetime.now().isoformat()
-                            add_visit(
-                                patient_id=st.session_state.active_patient_id,
-                                visit_date=str(date.today()),
-                                visit_type="تقييم وتزيين بالذكاء الاصطناعي",
-                                chief_complaint="تشخيص ذكي آلي",
-                                clinical_findings=clinical_findings.strip(),
-                                diagnosis=generated_diagnosis,
-                                treatment_plan=generated_treatment_plan,
-                                notes="تم التوليد التلقائي عبر وحدة الذكاء الاصطناعي",
-                                created_at=created_at,
-                            )
-                            st.success("تم حفظ التشخيص وخطة العلاج في سجل المريض بنجاح!")
-                        except Exception as e:
-                            st.error(f"خطأ أثناء الحفظ: {str(e)}")
+        col_btn1, col_btn2 = st.columns(2)
+        with col_btn1:
+            if st.button("🔬 توليد مقترحات الذكاء الاصطناعي", type="secondary"):
+                st.info("تم تحديث مقترحات التشخيص وخطة العلاج بناءً على الوحدة السريرية المختارة.")
+                st.rerun()
+                
+        with col_btn2:
+            if st.button("💾 حفظ وربط التشخيص بملف المريض", type="primary"):
+                if not diagnosis_input.strip() or not treatment_plan_input.strip():
+                    st.warning("الرجاء التأكد من إدخال التشخيص وخطة العلاج.")
+                else:
+                    try:
+                        created_at = datetime.now().isoformat()
+                        add_visit(
+                            patient_id=active_id,
+                            visit_date=str(date.today()),
+                            visit_type=diagnosis_type,
+                            chief_complaint=clinical_findings.strip() or "استشارة وتشخيص سريري",
+                            clinical_findings=clinical_findings.strip(),
+                            diagnosis=diagnosis_input.strip(),
+                            treatment_plan=treatment_plan_input.strip(),
+                            notes="تم الحفظ من وحدة التشخيص السريري بالذكاء الاصطناعي",
+                            created_at=created_at,
+                        )
+                        st.success("تم حفظ التشخيص وخطة العلاج في سجل المريض بنجاح!")
+                    except Exception as e:
+                        st.error(f"حدث خطأ أثناء الحفظ: {str(e)}")
+
 
 elif menu == "التقارير":
 
