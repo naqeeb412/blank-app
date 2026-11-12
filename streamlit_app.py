@@ -321,10 +321,6 @@ elif menu == "المرضى":
                 st.divider()
 
                 # ------------------------------------------------
-                # صور المريض - كشف تلقائي
-                # ------------------------------------------------
-                
-# ------------------------------------------------
 # صور المريض والأشعة بجميع أنواعها
 # ------------------------------------------------
 
@@ -384,77 +380,6 @@ if uploaded_file is not None:
                     st.rerun()
                 except Exception as e:
                     st.error(f"خطأ أثناء الحفظ: {str(e)}")
-
-                st.subheader("📸 صور المريض")
-                st.caption(
-                    "ارفع الصورة وسيكتشف التطبيق نوعها تلقائيًا"
-                )
-
-                uploaded_file = st.file_uploader(
-                    "اختر صورة (JPG, PNG)",
-                    type=["jpg", "jpeg", "png"],
-                    key="uploader_" + active_id,
-                )
-
-                if uploaded_file is not None:
-                    file_size_mb = uploaded_file.size / (1024 * 1024)
-
-                    if file_size_mb > 10:
-                        st.error(
-                            f"حجم الصورة كبير جدًا ({file_size_mb:.1f} MB)"
-                        )
-                    else:
-                        st.info(f"حجم الصورة: {file_size_mb:.2f} MB")
-
-                        detected_type = detect_photo_type(uploaded_file)
-
-                        col_img, col_info = st.columns([1, 2])
-
-                        with col_img:
-                            st.image(
-                                uploaded_file,
-                                caption="معاينة",
-                                width=200,
-                            )
-
-                        with col_info:
-                            st.success(
-                                f"🔍 النوع المكتشف: **{detected_type}**"
-                            )
-
-                            all_types = [
-                                "صورة أمامية",
-                                "صورة جانبية",
-                                "صورة الابتسامة",
-                                "أشعة",
-                            ]
-
-                            confirmed_type = st.selectbox(
-                                "تأكيد أو تغيير النوع:",
-                                all_types,
-                                index=all_types.index(detected_type),
-                                key="confirm_" + active_id,
-                            )
-
-                            if st.button(
-                                "💾 حفظ الصورة",
-                                type="primary",
-                                key="save_" + active_id,
-                            ):
-                                try:
-                                    file_bytes = uploaded_file.getvalue()
-                                    upload_photo(
-                                        active_id,
-                                        file_bytes,
-                                        uploaded_file.name,
-                                        confirmed_type,
-                                    )
-                                    st.success("تم رفع الصورة بنجاح.")
-                                    st.rerun()
-                                except Exception as e:
-                                    st.error(f"خطأ: {str(e)}")
-
-                st.divider()
 
                 # ------------------------------------------------
                 # معرض الصور
