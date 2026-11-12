@@ -323,6 +323,67 @@ elif menu == "المرضى":
                 # ------------------------------------------------
                 # صور المريض - كشف تلقائي
                 # ------------------------------------------------
+                
+# ------------------------------------------------
+# صور المريض والأشعة بجميع أنواعها
+# ------------------------------------------------
+
+st.subheader("📸 إدارة صور المريض والأشعة السريرية")
+st.caption("قم برفع الصورة أو الأشعة وسيقوم النظام بتصنيفها تلقائياً أو اختيارها يدوياً")
+
+uploaded_file = st.file_uploader(
+    "اختر صورة أو أشعة (JPG, PNG)",
+    type=["jpg", "jpeg", "png"],
+    key="uploader_" + active_id,
+)
+
+if uploaded_file is not None:
+    file_size_mb = uploaded_file.size / (1024 * 1024)
+
+    if file_size_mb > 10:
+        st.error(f"حجم الصورة كبير جدًا ({file_size_mb:.1f} MB). الحد الأقصى 10 ميجابايت.")
+    else:
+        detected_type = detect_photo_type(uploaded_file)
+
+        col_img, col_info = st.columns([1, 2])
+
+        with col_img:
+            st.image(
+                uploaded_file,
+                caption="معاينة الصورة المرفوعة",
+                width=200,
+            )
+
+        with col_info:
+            st.success(f"🔍 النوع المكتشف: **{detected_type}**")
+
+            all_types = [
+                "صورة أمامية للوجه",
+                "صورة جانبية (Profile)",
+                "صورة الابتسامة (Smile View)",
+                "أشعة بانوراما / سيفالومتريك",
+                "صور إكلينيكية للأسنان"
+            ]
+
+            confirmed_type = st.selectbox(
+                "تأكيد أو تغيير نوع الصورة/الأشعة:",
+                all_types,
+                key="confirm_type_" + active_id,
+            )
+
+            if st.button("💾 حفظ الصورة/الأشعة في قاعدة البيانات", type="primary", key="save_photo_btn"):
+                try:
+                    file_bytes = uploaded_file.getvalue()
+                    upload_photo(
+                        active_id,
+                        file_bytes,
+                        uploaded_file.name,
+                        confirmed_type,
+                    )
+                    st.success("تم رفع وحفظ الصورة أو الأشعة بنجاح!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"خطأ أثناء الحفظ: {str(e)}")
 
                 st.subheader("📸 صور المريض")
                 st.caption(
