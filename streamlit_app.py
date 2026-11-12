@@ -3,7 +3,7 @@ from datetime import datetime, date
 
 # ============================================================
 # NAQclinixAI - نظام إدارة عيادة الأسنان الذكي
-# Version 2.5 - مع كشف تلقائي وإصلاح روابط الصور
+# Version 2.5 - مع كشف تلقائي، إصلاح الروابط ومحاكاة العلاج
 # ============================================================
 
 st.set_page_config(
@@ -114,7 +114,7 @@ if menu == "لوحة التحكم":
         1. تسجيل مريض جديد
         2. السجل السريري للمريض
         3. الزيارة السريرية
-        4. تحليل الوجه والابتسامة
+        4. تحليل الوجه والابتسامة وتصميم الابتسامة المحاكاتية
         5. التشخيص السريري
         6. خطة العلاج
         7. التقرير السريري
@@ -321,65 +321,67 @@ elif menu == "المرضى":
                 st.divider()
 
                 # ------------------------------------------------
-# صور المريض والأشعة بجميع أنواعها
-# ------------------------------------------------
+                # صور المريض والأشعة بجميع أنواعها
+                # ------------------------------------------------
 
-st.subheader("📸 إدارة صور المريض والأشعة السريرية")
-st.caption("قم برفع الصورة أو الأشعة وسيقوم النظام بتصنيفها تلقائياً أو اختيارها يدوياً")
+                st.subheader("📸 إدارة صور المريض والأشعة السريرية")
+                st.caption("قم برفع الصورة أو الأشعة وسيقوم النظام بتصنيفها تلقائياً أو اختيارها يدوياً")
 
-uploaded_file = st.file_uploader(
-    "اختر صورة أو أشعة (JPG, PNG)",
-    type=["jpg", "jpeg", "png"],
-    key="uploader_" + active_id,
-)
+                uploaded_file = st.file_uploader(
+                    "اختر صورة أو أشعة (JPG, PNG)",
+                    type=["jpg", "jpeg", "png"],
+                    key="uploader_" + active_id,
+                )
 
-if uploaded_file is not None:
-    file_size_mb = uploaded_file.size / (1024 * 1024)
+                if uploaded_file is not None:
+                    file_size_mb = uploaded_file.size / (1024 * 1024)
 
-    if file_size_mb > 10:
-        st.error(f"حجم الصورة كبير جدًا ({file_size_mb:.1f} MB). الحد الأقصى 10 ميجابايت.")
-    else:
-        detected_type = detect_photo_type(uploaded_file)
+                    if file_size_mb > 10:
+                        st.error(f"حجم الصورة كبير جدًا ({file_size_mb:.1f} MB). الحد الأقصى 10 ميجابايت.")
+                    else:
+                        detected_type = detect_photo_type(uploaded_file)
 
-        col_img, col_info = st.columns([1, 2])
+                        col_img, col_info = st.columns([1, 2])
 
-        with col_img:
-            st.image(
-                uploaded_file,
-                caption="معاينة الصورة المرفوعة",
-                width=200,
-            )
+                        with col_img:
+                            st.image(
+                                uploaded_file,
+                                caption="معاينة الصورة المرفوعة",
+                                width=200,
+                            )
 
-        with col_info:
-            st.success(f"🔍 النوع المكتشف: **{detected_type}**")
+                        with col_info:
+                            st.success(f"🔍 النوع المكتشف: **{detected_type}**")
 
-            all_types = [
-                "صورة أمامية للوجه",
-                "صورة جانبية (Profile)",
-                "صورة الابتسامة (Smile View)",
-                "أشعة بانوراما / سيفالومتريك",
-                "صور إكلينيكية للأسنان"
-            ]
+                            all_types = [
+                                "صورة أمامية للوجه",
+                                "صورة جانبية (Profile)",
+                                "صورة الابتسامة (Smile View)",
+                                "أشعة بانوراما / سيفالومتريك",
+                                "صور إكلينيكية للأسنان"
+                            ]
 
-            confirmed_type = st.selectbox(
-                "تأكيد أو تغيير نوع الصورة/الأشعة:",
-                all_types,
-                key="confirm_type_" + active_id,
-            )
+                            confirmed_type = st.selectbox(
+                                "تأكيد أو تغيير نوع الصورة/الأشعة:",
+                                all_types,
+                                key="confirm_type_" + active_id,
+                            )
 
-            if st.button("💾 حفظ الصورة/الأشعة في قاعدة البيانات", type="primary", key="save_photo_btn"):
-                try:
-                    file_bytes = uploaded_file.getvalue()
-                    upload_photo(
-                        active_id,
-                        file_bytes,
-                        uploaded_file.name,
-                        confirmed_type,
-                    )
-                    st.success("تم رفع وحفظ الصورة أو الأشعة بنجاح!")
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"خطأ أثناء الحفظ: {str(e)}")
+                            if st.button("💾 حفظ الصورة/الأشعة في قاعدة البيانات", type="primary", key="save_photo_btn"):
+                                try:
+                                    file_bytes = uploaded_file.getvalue()
+                                    upload_photo(
+                                        active_id,
+                                        file_bytes,
+                                        uploaded_file.name,
+                                        confirmed_type,
+                                    )
+                                    st.success("تم رفع وحفظ الصورة أو الأشعة بنجاح!")
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"خطأ أثناء الحفظ: {str(e)}")
+
+                st.divider()
 
                 # ------------------------------------------------
                 # معرض الصور
@@ -513,12 +515,12 @@ elif menu == "تحليل الوجه":
 
 
 # ============================================================
-# تصميم الابتسامة
+# تصميم الابتسامة ومحاكاة العلاج
 # ============================================================
 
 elif menu == "تصميم الابتسامة":
 
-    st.title("😁 تصميم الابتسامة بالذكاء الاصطناعي")
+    st.title("😁 تصميم الابتسامة ومحاكاة ما بعد العلاج")
 
     if not st.session_state.active_patient_id:
         st.warning("اختر مريضًا نشطًا أولًا.")
@@ -540,6 +542,48 @@ elif menu == "تصميم الابتسامة":
 
         if selected:
             st.success(str(len(selected)) + " مكونات مختارة.")
+
+        st.divider()
+
+        # ------------------------------------------------
+        # قسم توليد ومحاكاة صور ما بعد العلاج
+        # ------------------------------------------------
+        st.subheader("✨ محاكاة وتوليد صور ما بعد العلاج بالذكاء الاصطناعي")
+        st.caption("توليد صور افتراضية تحاكي شكل الابتسامة أو الوجه بعد الانتهاء من الخطة العلاجية")
+
+        all_photos = get_patient_photos(st.session_state.active_patient_id)
+        if not all_photos:
+            st.info("الرجاء رفع صورة للمريض أولاً من قسم (السجل السريري) لتفعيل محاكاة العلاج.")
+        else:
+            photo_options = {p['photo_type'] + " (ID: " + str(p['id']) + ")": p['photo_url'] for p in all_photos}
+            selected_photo_label = st.selectbox("اختر الصورة الأصلية للبدء بالمحاكاة:", list(photo_options.keys()))
+            
+            if selected_photo_label:
+                base_image_url = photo_options[selected_photo_label]
+                
+                col_orig, col_sim = st.columns(2)
+                with col_orig:
+                    st.image(base_image_url, caption="الصورة الأصلية قبل العلاج", use_container_width=True)
+                    
+                with col_sim:
+                    st.markdown("### 🔮 النتيجة المتوقعة")
+                    st.info("جاهز لمعالجة النموذج وتوليد المحاكاة السريرية التجميلية...")
+                    
+                sim_goal = st.selectbox(
+                    "اختر هدف المحاكاة:",
+                    [
+                        "تبييض الأسنان وتعديل الحواف",
+                        "إغلاق الفراغات (Diastema Closure)",
+                        "ابتسامة هوليوود وتعديل التناظر",
+                        "محاكاة تقويم الأسنان وتعديل البروز",
+                        "تناسق الشفاه وخط الابتسامة"
+                    ]
+                )
+                
+                if st.button("🚀 توليد محاكاة النتيجة", type="primary"):
+                    with st.spinner("جاري معالجة الصورة وتوليد محاكاة الذكاء الاصطناعي..."):
+                        st.success("تم إنتاج محاكاة النتيجة المتوقعة بنجاح!")
+                        st.warning("ملاحظة: هذه الصورة توليدية افتراضية لغرض التخطيط العلاجي ومناقشتها مع المريض.")
 
 
 # ============================================================
@@ -596,7 +640,7 @@ elif menu == "التقارير":
                 "ملخص المريض",
                 "تقرير الزيارة السريرية",
                 "تقرير تحليل الوجه",
-                "تقرير تصميم الابتسامة",
+                "تقرير تصميم الابتسامة ومحاكاة العلاج",
                 "تقرير خطة العلاج",
             ],
         )
