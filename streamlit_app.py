@@ -17,20 +17,6 @@ from style import apply_rtl
 apply_rtl()
 
 # ============================================================
-# تسجيل الدخول
-# ============================================================
-
-if not st.user.is_logged_in:
-    st.title("🦷 NAQclinixAI")
-    st.subheader("طب أسنان ذكي، انسجام مثالي")
-    st.write("الرجاء تسجيل الدخول للوصول إلى لوحة التحكم")
-
-    if st.button("🔐 تسجيل الدخول عبر Google", type="primary"):
-        st.login()
-
-    st.stop()
-
-# ============================================================
 # قاعدة البيانات
 # ============================================================
 
@@ -90,11 +76,8 @@ else:
 
 st.sidebar.divider()
 
-st.sidebar.write(f"👤 {st.user.name}")
-st.sidebar.caption(st.user.email)
-
-if st.sidebar.button("🚪 تسجيل الخروج"):
-    st.logout()
+st.sidebar.write("👤 الطبيب المشرف")
+st.sidebar.caption("naqeeb@naqclinix.ai")
 
 st.sidebar.divider()
 st.sidebar.caption("DentoFacial-HarmonizeAI")
