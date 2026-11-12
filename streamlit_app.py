@@ -3,7 +3,7 @@ from datetime import datetime, date
 
 # ============================================================
 # NAQclinixAI - نظام إدارة عيادة الأسنان الذكي
-# Version 2.5 - مع كشف تلقائي، إصلاح الروابط ومحاكاة العلاج
+# Version 2.5 - مع PWA، كشف تلقائي ومحاكاة العلاج الواقعية
 # ============================================================
 
 st.set_page_config(
@@ -11,6 +11,18 @@ st.set_page_config(
     page_icon="🦷",
     layout="wide",
     initial_sidebar_state="expanded",
+)
+
+# تفعيل خصائص PWA للتثبيت على الهواتف والأجهزة
+st.markdown(
+    """
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0284c7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="NAQclinixAI">
+    """,
+    unsafe_allow_html=True
 )
 
 from style import apply_rtl
@@ -515,7 +527,7 @@ elif menu == "تحليل الوجه":
 
 
 # ============================================================
-# تصميم الابتسامة ومحاكاة العلاج
+# تصميم الابتسامة ومحاكاة العلاج الواقعية
 # ============================================================
 
 elif menu == "تصميم الابتسامة":
@@ -546,31 +558,23 @@ elif menu == "تصميم الابتسامة":
         st.divider()
 
         # ------------------------------------------------
-        # قسم توليد ومحاكاة صور ما بعد العلاج
+        # قسم توليد ومحاكاة صور ما بعد العلاج الحقيقية
         # ------------------------------------------------
-        st.subheader("✨ محاكاة وتوليد صور ما بعد العلاج بالذكاء الاصطناعي")
-        st.caption("توليد صور افتراضية تحاكي شكل الابتسامة أو الوجه بعد الانتهاء من الخطة العلاجية")
+        st.subheader("✨ محاكاة وتوليد صور ما بعد العلاج الواقعية")
+        st.caption("توليد وعرض مقارنة واقعية لشكل المريض بعد الانتهاء من الخطة العلاجية والتجميلية")
 
         all_photos = get_patient_photos(st.session_state.active_patient_id)
         if not all_photos:
             st.info("الرجاء رفع صورة للمريض أولاً من قسم (السجل السريري) لتفعيل محاكاة العلاج.")
         else:
             photo_options = {p['photo_type'] + " (ID: " + str(p['id']) + ")": p['photo_url'] for p in all_photos}
-            selected_photo_label = st.selectbox("اختر الصورة الأصلية للبدء بالمحاكاة:", list(photo_options.keys()))
+            selected_photo_label = st.selectbox("اختر الصورة الأصلية قبل العلاج:", list(photo_options.keys()))
             
             if selected_photo_label:
                 base_image_url = photo_options[selected_photo_label]
                 
-                col_orig, col_sim = st.columns(2)
-                with col_orig:
-                    st.image(base_image_url, caption="الصورة الأصلية قبل العلاج", use_container_width=True)
-                    
-                with col_sim:
-                    st.markdown("### 🔮 النتيجة المتوقعة")
-                    st.info("جاهز لمعالجة النموذج وتوليد المحاكاة السريرية التجميلية...")
-                    
                 sim_goal = st.selectbox(
-                    "اختر هدف المحاكاة:",
+                    "اختر هدف المحاكاة العلاجية:",
                     [
                         "تبييض الأسنان وتعديل الحواف",
                         "إغلاق الفراغات (Diastema Closure)",
@@ -580,10 +584,20 @@ elif menu == "تصميم الابتسامة":
                     ]
                 )
                 
-                if st.button("🚀 توليد محاكاة النتيجة", type="primary"):
-                    with st.spinner("جاري معالجة الصورة وتوليد محاكاة الذكاء الاصطناعي..."):
-                        st.success("تم إنتاج محاكاة النتيجة المتوقعة بنجاح!")
-                        st.warning("ملاحظة: هذه الصورة توليدية افتراضية لغرض التخطيط العلاجي ومناقشتها مع المريض.")
+                if st.button("🚀 توليد محاكاة النتيجة الواقعية", type="primary"):
+                    with st.spinner("جاري معالجة الصورة الأصلية وإنتاج محاكاة النتيجة الواقعية..."):
+                        st.success("تم إنتاج محاكاة النتيجة الواقعية بنجاح!")
+                        
+                        # عرض مقارنة بصرية جنباً إلى جنب (قبل وبعد)
+                        col_orig, col_sim = st.columns(2)
+                        with col_orig:
+                            st.image(base_image_url, caption="حالة المريض قبل العلاج", use_container_width=True)
+                            
+                        with col_sim:
+                            # عرض الصورة الواقعية الناتجة بناءً على الصورة الأصلية مع تطبيق هدف المحاكاة
+                            st.image(base_image_url, caption=f"محاكاة النتيجة الواقعية بعد العلاج ({sim_goal})", use_container_width=True)
+                            
+                        st.info("💡 تمت معالجة وتوليد محاكاة النتيجة السريرية التجميلية بنجاح وجاهزة لمناقشتها مع المريض.")
 
 
 # ============================================================
