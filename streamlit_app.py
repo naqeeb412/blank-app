@@ -5,6 +5,22 @@ from datetime import datetime, date
 # NAQclinixAI - نظام إدارة عيادة الأسنان الذكي
 # Version 2.5 - مع PWA، كشف تلقائي ومحاكاة العلاج الواقعية
 # ============================================================
+st.markdown(
+    """
+    <style>
+        #MainMenu {visibility: hidden;}
+        header {visibility: hidden;}
+        footer {visibility: hidden;}
+        .stApp { margin-top: -20px; }
+    </style>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0284c7">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="NAQclinixAI">
+    """,
+    unsafe_allow_html=True
+)
 
 st.set_page_config(
     page_title="NAQclinixAI",
